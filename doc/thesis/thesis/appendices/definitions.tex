@@ -1,0 +1,123 @@
+\startcomponent thesis/appendices/regex-editors
+
+\project masters-project
+\product thesis
+
+\chapter{Glossary}
+
+% TODO: add line||feed
+
+% TODO: add meta||programming
+
+\startgloss{big||endian}
+In a \Term{big||endian} system, the most significant byte is stored first.
+Thus, the number 1023 is stored as 00000000 00000000 00000011 11111111,
+assuming a 32--bit system.
+\stopgloss
+
+\startgloss{byte}
+A \Term{byte} is a logical unit in a computer system.  It represents eight bits
+of information.
+\stopgloss
+
+\startgloss{\CLang}
+A programming language written by \Name{Dennis M.}{Ritchie}.  Initially written
+for for the \UNIX\ operating system as a way to enhance portability, \CLang\ is
+now one of the most well known and used programming languages.  Its simplicity
+and \quote{The Programmer is Always Right}||mindset makes it a favored choice
+by many programmers.  There are, however, complaints about it being too much of
+a low||level language, making many common tasks hard, or even unmaintainable to
+do.
+
+\Name{Brian W.}{Kernighan} is often credited as having invented the language
+together with Dr. Ritchie, but has refuted such claims, saying that
+\quotation{It's entirely Dennis Ritchie's work} \cite[LinuxJournal0703].  A
+history of the language is given by Dr. Ritchie in \cite[Ritchie93].  The
+reason for the mistaken attribution is most likely rooted in the fact that
+Brian W. Kernighan is the main author of the most well known and respected book
+on the subject, \PublicationTitle{The \CLang\ Programming Language}
+\cite[KernighanRitchie88], together with Dr. Ritchie.
+
+\CLang\ is covered in a couple of standards, the first defined by \ANSI\ in
+1989 \cite[C89], then the standard was taken over by \ISO/\IEC\ in 1990
+\cite[C90].  Under the 1990's, some effort was made to smoothly bring the
+language up to date with current trends for making the entry to the 21st
+century as smooth as possible, while keeping additions and changes to a
+minimum.  The update is standardized by \ISO/\IEC\ in ISO/IEC 9899:1999
+\PublicationTitle{Programming Languages. \CLang} \cite[C99].
+\stopgloss
+
+Desktop publishing, or DTP, is the process of editing and layout of printed
+material intended for publication, such as books, magazines, brochures, and the
+like using a personal computer. Desktop publishing software, such as
+QuarkXPress, is software specifically designed for such tasks. Such programs do
+not generally replace word processors and graphics applications, but are used
+to aggregate content created in these programs: text, raster graphics (such as
+images edited with Adobe Photoshop) and vector graphics (such as
+drawings/illustrations made with Adobe Illustrator).
+
+\startgloss{Desktop Publishing}
+Desktop publishing|<|also referred to as \DTP|>|is the process of editing
+books, newspapers, magazines, and so on, using a computer.  Desktop publishing
+software can be considered to be the glue between many different kinds of
+computer software, such as word processors, vector and raster graphic editors,
+and so on.  The specific software used for the specific tasks may vary, but are
+often bundled with the \DTP software itself.
+
+One may argue that desktop publishing began with \Name{Donald E.}{Knuth}'s
+\TeX\ software, which showed in 1978 that anyone with a (moderately sized at
+the time) computer could become a publisher.  \TeX\ was placed in the public
+domain which further spurred the advancement of high||quality printed material,
+especially of a technical nature.
+
+Examples of commercial applications are QuarkXPress, Adobe PageMaker, and
+Microsoft Publisher, which|<|although costing a bundle|>|do not quite measure
+up to the quality of Prof. Knuth's original software.
+\stopgloss
+
+% TODO: add reference to "The Unix Programming Environment" for this.
+\startgloss{grep}
+Initially a tool developed by Ken Thompson for searching files for matches of a
+given regular expression, derived from the \type{g} command in the \Command{ed}
+text editor.  The general form of the \type{g} command is \type{g/re/p}, where
+\type{re} is a regular expression.  This command will print (\type{p}) every
+line (\type{g}) matching the regular expression \type{re}.  Thus,
+\DefineTerm{grep} actually stands for {\em General (search for) Regular
+Expression and Print}.  Talk about having serious problems giving meaningful
+names to your inventions.
+
+Generally any tool that searches files for lines matching a given regular
+expression.
+\stopgloss
+
+\startgloss{little||endian}
+In a \Term{little||endian} system, the least significant byte is stored first.
+Thus, the number 1023 is stored as 11111111 00000011 00000000 00000000,
+assuming a 32--bit system.
+\stopgloss
+
+\startgloss{locale}
+In computing, a set of parameters that define the user's language, country,
+text encoding, time||zone, weekday names, month names, time and date formats,
+eras, various kinds of punctuation (currency, decimal points, \dots), and so
+on.
+\stopgloss
+
+\startgloss{\POSIX}
+\POSIX\ \cite[POSIX92]\ is an international standard defining the operating
+system interfaces for software designed for variants of the \UNIX\ operating
+system.  It covers such things as system calls, \CLang\ header files, the
+shell, various utilities/commands, among other things.
+\stopgloss
+
+\startgloss{word}
+A \Term{word} is a logical unit in a computer system.  It represents whatever
+number of bits that the computer architecture being discussed deals with for
+random access memory, or \RAM, access.  Common word sizes are 16, 32, and 64.
+\stopgloss
+
+% TODO: fill in with more simple definitions that may be relevant
+% (UTF-{8,16,32}, UTF, code point...bit and word?  script  code point
+% byte order (BOM) LE BE UNIX
+
+\stopcomponent

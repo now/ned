@@ -1,0 +1,322 @@
+\startcomponent thesis/appendices/regex-editors
+
+\project masters-project
+\product thesis
+
+\chapter
+  [vim regular expression syntax]
+  {Vim's Regular Expression Syntax}
+
+
+This appendix covers \Vim's regular expression syntax and
+capabilities, listing tokens and their interpretation by the regular expression
+functions of \Vim.  The structure of this section tries to follow the
+one found in the \Vim\ documentation for easy cross-reference.
+
+The grammar of \Vim's regular expression can be found in
+\in{\BNF\ grammar}[bnf:vim regex].
+
+\placebnfgrammar
+  [][bnf:vim regex]
+  {Regular expressions in \Vim.}
+  {\startbnfgrammar[]
+    <regex>: <branch> | <branch>"\|"<regex>
+    <branch>: <concat> | <concat>"\&"<branch>
+    <concat>: <piece> | <piece><concat>
+    <piece>: <atom> | <atom><quantifier>
+    <atom>: "." | "\." | "~" | <literal> | <back reference> | <assertion>
+        | <state change> | <optional atoms> | <character class>
+	| "\("<regex>"\)" | "\%("<regex>"\)" | "\z("<regex>"\)"
+    <quantifier>: "*" | "\+" | "\=" | "\?" | "\{"<number range>"}"
+    <literal>: <special character> | "\"<character> | <character>
+    <back reference>: "\1" | "\2" | "\3" | "\4" %
+                    | "\5" | "\6" | "\7" | "\8" | "\9"
+    <assertion>: "^" | "\_^" | "$" | "\_$" | "\<" | "\>" | "\%^" | "\%$" %$
+        | "\%#"
+        | "\%"<number>"l" | "\%"<number>"c" | "\%"<number>"v"
+        | "\@>" | "\@=" | "\@!" | "\@<=" | "\@<!"
+    <state change>: "\zs"|"\ze"|"\c"|"\C"|"\m"|"\M"|"\v"|"\V"|"\Z"
+    <optional atoms>: "\%["<atoms>"]"
+    <atoms>: <atom> | <atoms><atom>
+    <character class>: "\"<named character class> | "\_"<named character class>
+        | "["<bracket atoms>"]" | "[^"<bracket atoms>"]"
+        | "\c["<bracket atoms>"]" | "\c[^"<bracket atoms>"]"
+        | "\_["<bracket atoms>"]" | "\_[^"<bracket atoms>"]"
+    <number range>: <empty> | <number>
+                  | <number>"," | ","<number> | <number>","<number>
+    <special character>: "\e" | "\t" | "\r" | "\b" | "\n" | "\\"
+    <character>: .
+    <number>: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+    <named character class>: "i" | "I" | "k" | "K" | "f" | "F" | "p" | "P" %
+        | "s" | "S"
+        | "d" | "D" | "x" | "X" | "o" | "O" | "w" | "W" | "h" | "H" | "a" %
+        | "A" | "l" | "L" | "u" | "U"
+    <bracket atoms>: <bracket atom> | <bracket atoms><bracket atom>
+    <bracket atom>: <character> | <character>"-"<character>
+        | "[:"<posix character class>":]" | <special character>
+    <posix character class>: "alnum" | "alpha" | "blank" | "cntrl" | "digit"
+        | "graph" | "lower" | "print" | "punct" | "space" | "upper" | "xdigit"
+        | "return" | "tab" | "escape" | "backspace"
+   \stopbnfgrammar}
+
+Now, let us cover the semantics of \Vim's regular expressions.  We begin by
+listing the quantifiers:
+
+\placetable
+  [always]
+  {Quantifiers}
+  \starttable[|l|l|]
+    \HL
+    \NC \bf Operator                                      \NC \bf Matches of the Preceding Atom         \NC\AR
+    \HL
+    \NC \type{*}                                          \NC zero or more (Kleene star/closure)        \NC\AR
+    \NC \type{\+}                                         \NC one or more                               \NC\AR
+    \NC \type{\=}                                         \NC zero or one                               \NC\AR
+    \NC \type{\?}                                         \NC zero or one                               \NC\AR
+    \NC \tttf\type{\}\leftargument$n$,$m$\rightargument   \NC $n$ to $m$                                \NC\AR
+    \NC \tttf\type{\}\leftargument$n$\rightargument       \NC exactly $n$                               \NC\AR
+    \NC \tttf\type{\}\leftargument$n$,\rightargument      \NC $n$ or more                               \NC\AR
+    \NC \tttf\type{\}\leftargument,$m$\rightargument      \NC zero to $m$                               \NC\AR
+    \NC \tttf\type{\}\leftargument\rightargument          \NC zero or more (same as \type{*})           \NC\AR
+    \NC \tttf\type{\}\leftargument-$\ldots$\rightargument \NC same as the previous five, non||greedily  \NC\AR
+    \HL
+  \stoptable
+
+As they are related, we next list the look||around and possessifying operators:
+
+\placetable
+  [always]
+  {Look||around and Possessification}
+  \starttable[|l|l|]
+  \HL
+  \NC \bf Operator  \NC \bf Look||around or Possessifying Effect \NC\AR
+  \HL
+  \NC \type{\@>}     \NC makes the preceding atom possessive \NC\AR
+  \NC \type{\@=}     \NC look||ahead for preceding atom \NC\AR
+  \NC \type{\@!}    \NC negative look-ahead for preceding atom \NC\AR
+  \NC \type{\@<=}   \NC look||behind for preceding atom \NC\AR
+  \NC \type{\@<!}   \NC negative look||behind for preceding atom \NC\AR
+  \stoptable
+
+It is worth noting that the look||around operators allow non||fixed length
+matching atoms in what they effect.
+
+Next we have ordinary atoms:
+
+\placetable
+  {Assertions}
+  \starttable[|l|l|]
+  \HL
+  \NC \bf Operator          \NC \bf Matches \NC\AR
+  \HL
+  \NC \type{^}              \NC at beginning of regex, start||of||line \NC\AR
+  \NC \type{\_^}            \NC anywhere in regex, start||of||line \NC\AR
+  \NC \type{$}              \NC at end of regex, end||of||line \NC\AR
+  \NC \type{\_$}            \NC anywhere in regex, end||of||line \NC\AR
+  \NC \type{.}              \NC any character \NC\AR
+  \NC \type{\_}.            \NC any character or end||of||line \NC\AR
+  \NC \type{\<}             \NC beginning of a word \NC\AR
+  \NC \type{\>}             \NC end of a word \NC\AR
+  \NC \type{\zs}            \NC sets start of match \NC\AR
+  \NC \type{\ze}            \NC sets end of match \NC\AR
+  \NC \type{\%^}            \NC beginning of file \NC\AR
+  \NC \type{\%$}            \NC end of file \NC\AR
+  \NC \type{\%#}            \NC cursor position \NC\AR
+  \NC \type{\%}$n$\type{l}  \NC anywhere in line $n$ \NC\AR
+  \NC \type{\%}$n$\type{c}  \NC anywhere in column $n$ \NC\AR
+  \NC \type{\%}$n$\type{v}  \NC anywhere in virtual column $n$ \NC\AR
+  \stoptable
+
+Followed by character classes:
+
+\splitfloat
+  {\placetable{Character Classes}}
+  {\starttablehead
+     \HL
+     \NC \bf Operator            \NC \bf Matches \NC\AR
+     \HL
+   \stoptablehead
+   \starttabletail
+     \HL
+   \stoptabletail
+   \starttables[|l|lp(25em)|]
+     \NC \type{\i}               \NC identifier character
+                                     (controlled by option) \NC\AR
+     \NC \type{\I}               \NC negation of \type{\i} \NC\AR
+     \NC \type{\k}               \NC keyword character
+                                     (controlled by option) \NC\AR
+     \NC \type{\K}               \NC negation of \type{\k} \NC\AR
+     \NC \type{\f}               \NC file name character
+                                     (controlled by option) \NC\AR
+     \NC \type{\F}               \NC negation of \type{\f} \NC\AR
+     \NC \type{\p}               \NC printable character
+                                     (controlled by option) \NC\AR
+     \NC \type{\P}               \NC negation of \type{\p} \NC\AR
+     \NC \type{\s}               \NC whitespace character \NC\AR
+     \NC \type{\S}               \NC negation of \type{\s} \NC\AR
+     \NC \type{\d}               \NC digit \NC\AR
+     \NC \type{\D}               \NC non||digit \NC\AR
+     \NC \type{\x}               \NC hex digit \NC\AR
+     \NC \type{\X}               \NC non||hex digit \NC\AR
+     \NC \type{\o}               \NC octal digit \NC\AR
+     \NC \type{\O}               \NC non||octal digit \NC\AR
+     \NC \type{\w}               \NC word character \NC\AR
+     \NC \type{\W}               \NC non||word character \NC\AR
+     \NC \type{\h}               \NC head of word character \NC\AR
+     \NC \type{\a}               \NC alphabetic character \NC\AR
+     \NC \type{\A}               \NC non||alphabetic character \NC\AR
+     \NC \type{\l}               \NC lowercase character \NC\AR
+     \NC \type{\L}               \NC non||lowercase character \NC\AR
+     \NC \type{\u}               \NC uppercase character \NC\AR
+     \NC \type{\U}               \NC non||uppercase character \NC\AR
+     \NC \type{\_}$x$            \NC where $x$ is any of the characters above, add 
+                                     end||of||line to possible matches \NC\AR
+     \NC \type{\e}               \NC escape character \NC\AR
+     \NC \type{\t}               \NC tabulation character \NC\AR
+     \NC \type{\r}               \NC carriage||return character \NC\AR
+     \NC \type{\b}               \NC backspace character \NC\AR
+     \NC \type{\n}               \NC end||of||line character \NC\AR
+     \NC \type{~}                \NC last given substitute string \NC\AR
+     \NC \type{\}$1\ldots{}n$    \NC string matched by capturing group $n$ \NC\AR
+     \NC \type{x}                \NC a character matches itself \NC\AR
+     \NC \type{[}\dots\type{]}   \NC any character contained inside of
+                                     brackets \NC\AR
+     \NC \type{[^}\dots\type{]}  \NC any character not contained inside of
+                                     brackets \NC\AR
+     \NC \type{\%[}\dots\type{]} \NC a list of optionally matched atoms following,
+                                     as long as possible \NC\AR
+   \stoptables}
+
+The character class names defined by \POSIX\ supported by \Vim\ are:
+
+\placetable
+  {\POSIX\ Character Classes}
+  \starttable[|l|l|]
+  \HL
+  \NC \bf Token             \NC \bf Matches \NC\AR
+  \HL
+  \NC \type{[:alnum:]}      \NC letters and digits \NC\AR
+  \NC \type{[:alpha:]}      \NC letters \NC\AR
+  \NC \type{[:blank:]}      \NC space and tab characters \NC\AR
+  \NC \type{[:cntrl:]}      \NC control characters \NC\AR
+  \NC \type{[:digit:]}      \NC decimal digits \NC\AR
+  \NC \type{[:graph:]}      \NC printable characters excluding whitespace\NC\AR
+  \NC \type{[:lower:]}      \NC lowercase letters \NC\AR
+  \NC \type{[:print:]}      \NC printable characters \NC\AR
+  \NC \type{[:punct:]}      \NC punctuation characters \NC\AR
+  \NC \type{[:space:]}      \NC whitespace \NC\AR
+  \NC \type{[:upper:]}      \NC uppercase letters \NC\AR
+  \NC \type{[:xdigit:]}     \NC hexadecimal digits \NC\AR
+  \NC \type{[:return:]}     \NC carriage||return character \NC\AR
+  \NC \type{[:tab:]}        \NC tabulation character \NC\AR
+  \NC \type{[:escape:]}     \NC escape character \NC\AR
+  \NC \type{[:backspace:]}  \NC backspace character \NC\AR
+  \stoptable
+
+\Vim\ also provides ways to toggle matching options from inside a regular
+expression:
+ 
+\placetable
+  {Option Toggles}
+  \starttable[|l|lp(25em)|]
+  \HL
+  \NC \bf Operator  \NC \bf Sets Option \NC\AR
+  \HL
+  \NC \type{\c}     \NC ignore case \NC\AR
+  \NC \type{\C}     \NC match case \NC\AR
+  \NC \type{\m}     \NC magic matching
+                        (some characters get different meaning) \NC\AR
+  \NC \type{\M}     \NC magic matching to off \NC\AR
+  \NC \type{\v}     \NC very||magic matching
+                        (even more characters get different meaning) \NC\AR
+  \NC \type{\V}     \NC very||magic to off \NC\AR
+  \NC \type{\Z}     \NC ignore differences in Unicode combining
+                        characters \NC\AR
+  \stoptable
+
+Grouping is done in one of the following ways:
+
+\placetable
+  {Grouping}
+  \starttable[|l|lp(20em)|]
+  \HL
+  \NC \bf Operator              \NC \bf Captures Match for
+                                    \type{\}$1\ldots{}n$ Retrieval? \NC\AR
+  \HL
+  \NC \type{\(}\dots\type{\)}   \NC yes \NC\AR
+  \NC \type{\%(}\dots\type{\)}  \NC no \NC\AR
+  \stoptable
+
+\placebnfgrammar
+  []
+  [grammar:substitution specification]
+  {The substitution specification grammar for the \type{s} command in \Vim.}
+  {\startbnfgrammar[]
+     <substitution specification>: <substitution item>
+       | <substitution specification> <substitution item>
+     <substitution item>: <submatch> | <transformation>
+       | <special symbol> | <symbol>
+     <submatch>: "&" | <numbered submatch>
+     <numbered submatch>: "\" <number>
+     <transformation>: <simple transformation> <symbol>
+       | <compound transformation> <substitution specification> "\E"
+     <simple transformation>: "\u" | "\l"
+     <compound transformation>: "\U" | "\L"
+     <special symbol>: "\" <symbol>
+   \stopbnfgrammar}
+
+\placetable
+  []
+  [table:substitutions]
+  {Substitutions}
+  \starttable[|l|lp(20em)|]
+  \HL
+  \NC \bf Item    \NC \bf Substitution                                \NC\AR
+  \HL
+  \NC \type{&}    \NC The whole match                                 \NC\AR
+  \NC \type{\0}   \NC Same as \type{&}                                \NC\AR
+  \NC \type{\1}   \NC The first submatch                              \NC\AR
+  \NC \type{\2}   \NC The second submatch                             \NC\AR
+  \NC $\vdots$    \NC $\vdots$                                        \NC\AR
+  \NC \type{\9}   \NC The ninth submatch                              \NC\AR
+  \NC \type{\u}   \NC Turn next character uppercase                   \NC\AR
+  \NC \type{\U}   \NC Turn characters uppercase until a \type{\E}     \NC\AR
+  \NC \type{\l}   \NC Turn next character lowercase                   \NC\AR
+  \NC \type{\L}   \NC Turn characters lowercase until a \type{\E}     \NC\AR
+  \NC \type{\E}   \NC End a \type{\U} or \type{\L}                    \NC\AR
+  \NC \type{\r}   \NC Insert a \CharacterName{Carriage Return}        \NC\AR
+  \NC \type{\n}   \NC Insert a \CharacterName{Null}                   \NC\AR
+  \NC \type{\b}   \NC Insert a \CharacterName{Backspace}              \NC\AR
+  \NC \type{\t}   \NC Insert a \CharacterName{Character Tabulation}   \NC\AR
+  \NC \type{\\}   \NC Insert a \CharacterName{Backslash}              \NC\AR
+  \NC \type{\}$x$ \NC Reserved for future expansion                   \NC\AR
+  \HL
+  \stoptable
+
+%\placebnfgrammar
+%  []
+%  {none}
+%  {\startbnfgrammar[]
+%     <regex>: <concat> | <concat> "\|" <regex>
+%     <concat>: <piece> | <concat> <piece>
+%     <piece>: <atom> | <atom> <quantifier>
+%     <atom>: <assertion>
+%           | <literal>
+%           | "."
+%           | "[" <symbol range> "]"
+%           | "\(" <regex> "\)"
+%           | <back reference>
+%     <quantifier>: "*" | <range>
+%     <range>: "\{" <integer> "\}"
+%           | "\{" <integer> "," "\}"
+%           | "\{" <integer> "," <integer> "\}"
+%     <assertion>: "^" | "$" %$
+%
+%     <literal>: <non-{\tttf\texescape} symbol> | "\" <special symbol>
+%     <non-{\tttf\texescape} symbol>: $\hbox{\ASCII} \setminus \{ \text{\tttf\texescape} \}$
+%     <special symbol>: "." | "[" | "*" | "\" | "^" | "$" %$
+%
+%     <back reference>: "\" digit
+%  \stopbnfgrammar}
+
+\stopcomponent

@@ -1,0 +1,301 @@
+\startenvironment include/commands
+
+\unexpanded\def\TypedRegex%
+  {\type}
+%}
+
+\def\TypedString#1%
+  {\quotation{\tttf #1}}
+% TODO: perhaps remove this
+\define[1]\regex{#1}
+
+\def\REMatch#1%
+  {\thinspace\vrule height1pt width.5pt depth2pt
+   \underbar{\thinspace #1\thinspace}%
+   \vrule height1pt width.5pt depth2pt\thinspace}
+
+\define[2]\SubMatch%
+  {\mathematics{\mathopen{\langle} #1, #2 \mathclose{\rangle}}}
+
+\define[2]\Range{\langle #1, #2 \rangle}
+
+\define[1]\PublicationTitle{{\em #1}}
+
+\def\doDefineTerm[#1]#2%
+  {\iffirstargument
+     \index{#1}{\em #2}%
+   \else
+     \index{#2}{\em #2}%
+   \fi}
+\def\DefineTerm%
+  {\dosingleempty\doDefineTerm}
+\define[1]\Term{{\em #1}}
+
+\define[1]\Software{#1}
+\define[1]\Command{{\tt #1(1)}}
+
+\define[1]\CodePoint{U\raise.16ex\hbox{\x+}#1}
+\define[1]\CharacterName{\cap{#1}}
+\define[1]\Symbol{{\it#1\/}}
+\define[1]\KbdKey{{\sssc\viii\leavevmode\raise.24ex\hbox{%
+  \raise0.4pt\hbox{$\langle$}\kern-.08em\vtop{%
+    \vbox{\hrule\kern-0.4pt
+     \hbox{\raise0.4pt\hbox{\vphantom{$\langle$}}\lower.1ex\hbox{#1}}}%
+    \kern-0.4pt\hrule}%
+  \kern-.08em\raise0.4pt\hbox{$\rangle$}}}}
+
+
+\define[1]\Registered{#1\high{\vii\registered}}
+
+%\define[1]\FileName{{\tt #1}}
+\unexpanded\def\FileName%
+  {\type}
+%}
+
+\def\SeeSection[#1]%
+  {see \in{Section}[#1], \at{page}[#1]}
+
+\define[2]\Name{\index{\sc#2, #1}#1~#2}
+
+\define\Union{\cup}
+\define\Intersection{\cap}
+\define\KStar{\ast}
+\define\KPlus{+}
+%\define\Alt{\mathop|}
+\define\CartesianProduct{\times}
+\define[1]\PowersetOf{\mathematics{\mathcal{P}(#1)}}
+\define[1]\Ordo{\mathematics{O(#1)}}
+\define\SetUnion{\bigcup}
+\define\Yields{\mathematics{\vdash}}
+\define\RTCYields%
+  {\mathematics{\mathrel{\mathop%
+    {\vdash^{\kern-.1667em\KStar}\kern-.1667em\relax}}}}
+\define\UnYields{\mathematics{\vdash_{\kern-.1667em\prec}\kern-.1667em\relax}}
+%\define\UnYields{\mathematics{\vDash}}
+\define\RTCUnYields%
+  {\mathematics{\mathrel{\mathop%
+    {{\vdash^{\kern-.1667em\KStar}}_{\kern-.42em\prec}\kern-.1667em\relax}}}}
+%\define\RTCUnYields%
+%  {\mathematics{\mathrel{\mathop%
+%    {\vDash^{\kern-.1667em\KStar}\kern-.1667em\relax}}}}
+\define\Natural{\mathematics{\mathbb{N}}}
+\define\Zahl{\mathematics{\mathbb{Z}}}
+\define\Buffers{\mathematics{\mathcal{B}}}
+\define[1]\Function{\mathematics{\mathord{\text{\it #1}}}}
+\define\Push{\mathematics{\Leftarrow}}
+\define\Pop{\mathematics{\Leftarrow}}
+\def\Mfunction#1{{\it #1}}
+\definemathcommand [Fcodepoint]               {\Mfunction{codepoint}}
+\definemathcommand [Feclosure]                {\Mfunction{\text{ε||closure}}}
+\definemathcommand [Ftaggedeclosure]          {\Mfunction{\text{tagged||ε||closure}}}
+\definemathcommand [Fcount]                   {\Mfunction{count}}
+\definemathcommand [Finputorder]              {\Mfunction{\text{input||order}}}
+\definemathcommand [Funyieldseclosure]        {\Mfunction{\text{\UnYields||ε||closure}}}
+\definemathcommand [Finsert]                  {\Mfunction{insert}}
+\definemathcommand [Fdelete]                  {\Mfunction{delete}}
+\definemathcommand [Fmoveto]                  {\Mfunction{\text{move||to}}}
+\definemathcommand [Ftext]                    {\Mfunction{text}}
+\definemathcommand [Frepl]                    {\Mfunction{\text{read||eval||print}}}
+\definemathcommand [Freadsymbol]              {\Mfunction{\text{read||symbol}}}
+\definemathcommand [Floop]                    {\Mfunction{loop}}
+\definemathcommand [Fredisplay]               {\Mfunction{redisplay}}
+\definemathcommand [Fsymbolat]                {\Mfunction{\text{symbol||at}}}
+\definemathcommand [Alt]              [bin]   {|}
+
+\define\Proof{{\sc Proof}. }
+\define\ProofOutline{{\sc Proof Outline}. }
+
+\definesymbol[note][\uniqueMPgraphic{note}]
+\setupMPvariables[note][height=3ex]
+\define\Note{\bgroup\dontcomplain\inleft{\symbol[note]}\egroup}
+
+\logo[B]{\bf B}
+\logo[BIBTEX]{bib\TEX}
+\logo[CLang]{\bf C}
+\logo[CPP]{\CLang{\raise .32ex\hbox{\x++{}}}}
+\logo[CTANGLE]{\sc ctangle}
+\logo[CWEAVE]{\sc cweave}
+\logo[CWEB]{\sc cweb}
+\logo[NFAs]{\NFA{}s}
+\logo[DFAs]{\DFA{}s}
+\logo[JIM]{\tt jim}
+\logo[NeXTSTEP]{\ss NeXTSTEP}
+\logo[OPENSTEP]{\ss OPENSTEP}
+\logo[PlanNine]{Plan 9}
+\logo[TNFAs]{\TNFA{}s}
+\logo[SAM]{\tt sam}
+\def\THANH       {H\`an Th\^e\llap{\raise 0.5ex\hbox{\'{}}} Th\`anh}
+\logo[Unicode]{\ss Unicode}
+
+\definesynonyms[abbreviation][abbreviations][\abbreviationmeaning]
+
+%location=hanging,
+\defineenumeration
+  [Example]
+  [location=serried,
+   text={Example},
+   between=\blank,
+   before=\blank,
+   after=,
+   way=bychapter,
+   levels=1,
+   indenting=yes,
+   indentnext=no]
+\definestartstop
+  [example]
+  [before=\startExample,
+   after=\hfil\QED\stopExample]
+\setuplabeltext[en][example=Example ]
+\setuplabeltext[en][examples=Examples ]
+
+\defineenumeration
+  [definition]
+  [location=serried,
+   text={Definition},
+   between=\blank,
+   before=\blank,
+   way=bychapter,
+   indenting=yes,
+   levels=1]
+\setuplabeltext[en][definition=Definition ]
+\setuplabeltext[en][definitions=Definitions ]
+
+%   between=\blank,
+%   before=\blank,
+\defineenumeration
+  [theorem]
+  [location=hanging,
+   headstyle=smallcaps,
+   text={Theorem},
+   way=bychapter,
+   levels=1,
+   style=italic,
+   separator=.,
+   indenting=yes,
+   indentnext=no]
+\setuplabeltext[en][theorem=Theorem ]
+\setuplabeltext[en][theorems=Theorems ]
+
+\definedescription
+  [notation]
+  [location=left]
+
+\definedescription
+  [term]
+  [location=serried,
+   width=fit,
+   distance=1em]
+%  [location=hanging,
+%   width=fit]
+
+\definedescription
+  [gloss]
+  [location=hanging,
+   width=fit]
+
+\definefloat[regex][regexes]
+\setuplabeltext[en][regex=Regular Expression ]
+\setuplabeltext[en][regexes=Regular Expressions ]
+
+\definefloat[algorithm][algorithms]
+\setuplabeltext[en][algorithm=Algorithm ]
+\setuplabeltext[en][algorithms=Algorithms ]
+
+\definefloat[describedfigure][describedfigures][figure]
+
+% TODO: do this for all kinds of references
+%\setuplabeltext[en][chapter=Chapter ]
+%\setuplabeltext[en][chapters=Chapters ]
+%\setuplabeltext[en][section=Section ]
+%\setuplabeltext[en][sections=Sections ]
+
+\definereferenceformat[inintermezzo]    [label=intermezzo]
+\definereferenceformat[inintermezzos]   [label=intermezzos]
+\definereferenceformat[andintermezzo]   [text=and]
+\definereferenceformat[inexample]       [label=example]
+\definereferenceformat[inexamples]      [label=examples]
+\definereferenceformat[andexample]      [text=and]
+\definereferenceformat[indefinition]    [text=Definition]
+\definereferenceformat[indefinitions]   [text=Definitions]
+\definereferenceformat[anddefinition]   [text=and]
+\definereferenceformat[intheorem]       [text=Theorem]
+\definereferenceformat[intheorems]      [text=Theorems]
+\definereferenceformat[andtheorem]      [text=and]
+\definereferenceformat[inchapter]       [text=Chapter]
+\definereferenceformat[inchapters]      [text=Chapters]
+\definereferenceformat[andchapter]      [text=and]
+\definereferenceformat[inappendix]      [text=Appendix]
+\definereferenceformat[inappendices]    [text=Appendices]
+\definereferenceformat[andappendix]     [text=and]
+\definereferenceformat[insection]       [text=Section]
+\definereferenceformat[insections]      [text=Sections]
+\definereferenceformat[andsection]      [text=and]
+\definereferenceformat[intable]         [label=table]
+\definereferenceformat[intables]        [label=tables]
+\definereferenceformat[andtable]        [text=and]
+\definereferenceformat[inregex]         [label=regex]
+\definereferenceformat[inregexes]       [label=regexes]
+\definereferenceformat[andregex]        [text=and]
+\definereferenceformat[infigure]        [label=figure]
+\definereferenceformat[infigures]       [label=figures]
+\definereferenceformat[andfigure]       [text=and]
+\definereferenceformat[informula]       [text=Formula]
+\definereferenceformat[informulas]      [text=Formulas]
+\definereferenceformat[andformula]      [text=and]
+\definereferenceformat[inalgorithm]     [text=Algorithm]
+\definereferenceformat[inalgorithms]    [text=Algoritms]
+\definereferenceformat[andalgorithm]    [text=and]
+\definereferenceformat[inbnfgrammar]    [text=\BNF\ Grammar]
+\definereferenceformat[inbnfgrammars]   [text=\BNF\ Grammars]
+\definereferenceformat[andbnfgrammar]   [text=and]
+
+% TODO: make a color-scheme for this
+\definetyping[shellsession]
+
+\definetype
+  [KbdType]
+  [style=\ttsl]
+
+\definetype
+  [C]
+% FIXME: this bugs out ->  [option=C]
+
+\def\CDef[#1]%
+  {\reference[#1]{#1}}
+
+\def\CRef[#1]%
+  {\type{#1}, \at{page}[#1]}
+
+\definetype
+  [Ruby]
+
+\defineitemgroup
+  [algorithmio]
+  [levels=1]
+
+\unprotect
+
+\definesystemvariable{bquo}
+
+\definestartstop
+  [blockquote]
+  [before={\startnarrower\noindent},
+   after={\stopnarrower\checknextindentation[\@@bquoindentnext]}]
+
+\def\dosetupblockquote[#1]%
+  {\getparameters[\??bquo][#1]}
+
+\def\setupblockquote%
+  {\dosingleargument\dosetupblockquote}
+
+\setupblockquote
+  [indentnext=\v!no]
+
+\protect
+
+\definestartstop
+  [editorinput]
+  [before={\blank\startnarrower[3em]\noindent},
+   after={\stopnarrower\blank}]
+
+\stopenvironment

@@ -1,0 +1,38 @@
+#! /usr/bin/ruby -w
+# contents: Stream interface for ned.
+#
+# Copyright © 2005 Nikolai Weibull <nikolai@bitwi.se>
+
+
+
+require 'stringio'
+
+require 'ned'
+
+Ned::Registry.instance.require_library 'ned'
+Ned::Registry.instance.require_library 'ned/command-line'
+Ned::Registry.instance.require_library 'ned/buffer'
+
+$buffer = Ned::Registry.instance.buffer.buffer(StringIO.new($stdin.read))
+
+Ned::Registry.instance.regexes['digit'] = '0|1|2|3|4|5|6|7|8|9'
+Ned::Registry.instance.regexes['digits'] = '<digit>+'
+Ned::Registry.instance.regexes['vowel'] = 'a|e|o|u|i'
+Ned::Registry.instance.regexes['semi-vowels'] = 'y|w'
+
+Ned::Registry.instance.regexes['chconst'] = %q{'\\?.'}
+Ned::Registry.instance.regexes['string'] = '".*?[\\..*?]*"'
+Ned::Registry.instance.regexes['identhead'] =
+  'A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|_'
+Ned::Registry.instance.regexes['identtail'] = '<identhead>|0|1|2|3|4|5|6|7|8|9'
+Ned::Registry.instance.regexes['ident'] = '<identhead><identtail>*'
+
+catch :quit do
+  begin
+    Ned::Registry.instance.command_line.parsers.simple.parse(StringIO.new(ARGV[0])).execute
+  rescue => e
+    $stderr.puts "Error: #{e.message}"
+    exit
+  end
+end
+puts $buffer.to_s

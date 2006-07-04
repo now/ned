@@ -1,0 +1,4 @@
+iterator.o: iterator.c piece.h private.h piecetree.h iterator.h
+node.o: node.c private.h node.h
+piece.o: piece.c piece.h private.h
+piecetree.o: piecetree.c piece.h private.h piecetree.h iterator.h

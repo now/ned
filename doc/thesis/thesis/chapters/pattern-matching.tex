@@ -1,0 +1,417 @@
+\startcomponent thesis/chapters/pattern-matching
+
+\project masters-project
+\product thesis
+
+% TODO: ask anna
+\chapter
+  [patterns]
+  {Pattern Matching}
+%  {Pattern Matching Using Regular Expressions}
+%  {Pattern Matching: Finding Patterns in Text}
+
+
+Pattern matching is an important problem in computer science, put to good use
+in data processing, lexical analysis, information retrieval, and text editing.
+Text editors often allow the user to search for patterns in the text currently
+being edited.  Database query languages|<|such as \SQL\ \cite[SQL03]|>|allow
+complex queries to use patterns for selecting relevant data.  Many programming
+languages|<|such as \Perl\ \cite[Perl00], \CRM\ \cite[CRM04], and \AWK\
+\cite[AWK88]|>|make extensive use of pattern matching, as their intent is
+generally text transformation or information extraction of some kind.
+
+The general form of the pattern matching problem is to find an occurrence of
+some pattern $p$ as a substring of a string.  We will refer to this string as
+the \DefineTerm{input}.  If we let $p$ be \TypedRegex{here} and the input be
+\TypedString{here or there}, then $p$ will match two substrings of the input:
+\TypedString{\REMatch{here} or t\REMatch{here}}.
+
+\placefigure
+  [here]
+  [figure:pattern matching model]
+  {A model for pattern matching}
+  {\FLOWchart[pattern matching model]}
+
+\infigure[figure:pattern matching model] shows a model for pattern matching.
+The model’s input is some string $s$, again, referred to as the \Term{input},
+and a pattern $p$.  From the pattern we generate a pattern matcher $M$, which
+will then seek the input for matches of it, giving either “yes” or “no” as its
+output depending on whether the input contains a substring matching the pattern
+or not.
+
+The actual input and output may vary widely depending on the application.  For
+many software tools the input is a file consisting of lines of text plus a
+pattern to match and the output is a set of lines matching the pattern, perhaps
+modified in some way.  For database systems, the input is a table of data plus
+a query describing a pattern to match against the table and the output is a set
+of rows matching this pattern.  In a text editor the input is the text
+currently being edited plus some pattern identifying a position in the text to
+be edited and the output is an updated display of the text.
+
+The rest of this chapter will discuss pattern matching using {\em regular
+expressions} as the input pattern and {\em finite automata} as the generated
+pattern matcher.
+
+
+\section{Pattern Matching Using Regular Expressions}
+
+It’s now time to explain how regular expressions can be applied to the task of
+pattern matching.
+
+As we saw in \inchapter[definitions], a regular expression is a compact way of
+describing a regular language.  We also saw that we can generate a finite
+automaton that will accept precisely the set of strings in such a language,
+using the regular expression as a specification.  Thus, what we do to use
+regular expressions in our pattern||matching model is to write a regular
+expression $r$ and feed it as the input pattern $p$.  We then generate a finite
+automaton $A$ from this regular expression and feed it the input $s$.
+Automaton $A$ will then either \Term{accept} or \Term{reject} it, depending on
+whether $s$ is a part of the language described by $r$ or not.
+
+The output from this procedure is often interpreted further.  The command
+\Command{egrep}, for example, reports lines in files matching $r$ by augmenting
+$r$ with the prefix regular expression \TypedRegex{.*}, thus allowing it to
+match any prefix of the input and then generating an \NFA|<|or sometimes a
+\DFA|>|$A$ from \TypedRegex{.*}$r$.  Finally, it breaks up the file into the
+lines constituting it by looking for line||ending characters, such as
+\CodePoint{000A} (\CharacterName{line feed}) and passing them, in turn, to $A$.
+If $A$ \Term{accepts} the line, \Command{egrep} outputs it to the user along
+with the name of the file in which it was found.  An example of using
+\Command{egrep} may clarify matters.
+
+\startexample[example:spell-checking with egrep]
+  Say that we have written a couple of manuscripts and have since found that we
+  have misspelled the words “acceptable” and “color”|<|writing “acceptible” and
+  “colour” in their place|>|in at least one of them.  We don’t want to read
+  through all of the manuscripts to check for the occurrences of the same
+  misspellings, so what do we do?  Regular expressions to the rescue!
+  Notably|<|as we are working on a \UNIX\ system|>|we will use the \UNIX\
+  command \Command{egrep} for solving this task.
+
+  As noted in \inintermezzo[the real world:intermezzo:grep and egrep],
+  \Command{egrep} allows us to specify a regular expression that matches the
+  strings that we wish to find, and the files whose contents we would like to
+  search, so let’s try it.  Before we write our command, however, let’s take a
+  look at the files that we’re about to search:
+
+  \startitemize
+    \head \FileName{annual-report.txt} \par
+    \typefile{../thesis/data/annual-report.txt}
+
+    \head \FileName{brown-commentary.txt} \par
+    \typefile{../thesis/data/brown-commentary.txt}
+
+    \head \FileName{spelling.txt} \par
+    \typefile{../thesis/data/spelling.txt}
+  \stopitemize
+
+  Perhaps if we’d written \FileName{spelling.txt} before the other two, we
+  wouldn’t be in this mess.  Anyway, now what we do is invoke \Command{egrep}
+  in the following manner:
+
+  \startshellsession
+% egrep --line-number 'acceptible|colour' \
+> annual-report.txt brown-commentary.txt spelling.txt
+annual-report.txt:2:acceptable amount of our multi-coloured
+brown-commentary.txt:2:unacceptible in my humble opinion.  It is,
+spelling.txt:3:_not_ "acceptible" and "colour",
+spelling.txt:6:find "acceptible" acceptable.
+  \stopshellsession
+
+  We invoked \Command{egrep} with the \type{--line-number} option, which tells
+  \Command{egrep} to print out the line number along with the line of text and
+  name of the file in which it was found.  \Command{egrep} treats each line of
+  each file as a separate entity, and checks if any substring of it is accepted
+  by the finite automaton generated from the given regular expression.  If we
+  look at the output from \Command{egrep} presented above, we see that the
+  second line of \FileName{annual-report.txt} contains a misspelling of {\em
+  color}.  Notice how \Command{egrep} matched the regular expression against
+  that line even though the actual matching string \TypedString{colour} was
+  surrounded by text both before and after, and was even part of a longer
+  word---\TypedString{coloured}.  The same can be said about the second line of
+  \FileName{brown-commentary.txt}.  \Command{egrep} matched
+  \TypedString{acceptible}, even when it was a proper suffix of the word
+  \TypedString{unacceptible}.  There are ways to tell \Command{egrep} to only
+  match whole words so that this wouldn’t have happened.  In our case,
+  however, it was the right thing, as it caught two misspellings that we hadn’t
+  initially considered.  We ignore the misspellings in \FileName{spelling.txt},
+  as their presence is acceptable.  So now we know where we can find our
+  misspelled words and we can go ahead and amend our erroneous manuscripts.
+\stopexample
+
+As displayed in \inexample[example:spell-checking with egrep], we generally
+don’t force any specific structure on the data we search, except that some
+tools|<|such as \Command{egrep} and \Command{awk} \cite[AWK88]|>|treat textual
+lines as separate units.  We’ll see later that this is often an unnecessary
+restriction that can lead to certain difficulties.
+
+
+\section
+  [submatch addressing]
+  {Submatch Addressing}
+
+As discussed in the previous section, we match a regular expression against
+some input, ignoring its structure, instead looking for substrings within the
+input that are accepted by the finite automaton that’s been compiled from the
+regular expression.  When performing pattern matching in this way, it’s often
+desirable to know what parts of a regular expression matched what parts of the
+input.  This task is known as \DefineTerm{submatch addressing} and it’s
+performed by altering the semantics of our regular expressions slightly.
+
+The subexpression grouping operator, $(\ldots)$, is modified in such a way,
+that whatever matched by the contained expression will be recorded for future
+reference.  We record this information by keeping a pair of indexes
+\SubMatch{b}{e} into the input, where $b$ is the index of the first character
+matched by the subexpression and $e$ is the index of the last character matched
+by the subexpression plus one.  The first index in a string is $0$.  The length
+of the match can easily be computed from this information; it’s simply $e - b$.
+The pair \SubMatch{b}{e} is known as a \DefineTerm{submatch address}.
+
+As an example, consider the regular expression
+\TypedRegex{(this|that) or (that|this)} applied to the input
+\TypedString{this or that}, which is twelve characters long.  The regular
+expression will match the whole input, \TypedString{\REMatch{this or that}},
+and its submatch address will be \SubMatch{0}{12}.  The regular expression also
+has two subexpressions that have been marked for submatch addressing,
+\TypedRegex{(this|that)} and \TypedRegex{(that|this)}.  The first will match
+\TypedString{\REMatch{this} or that}, giving us the submatch address
+\SubMatch{0}{4}.  The second will match \TypedString{this or \REMatch{that}},
+giving us the submatch address \SubMatch{8}{12}.
+
+
+\section{Resolving Submatch Addressing Ambiguities}
+
+Submatch addressing doesn’t come without its own set of subtleties; one of
+them being the fact that a subexpression may participate in the match of
+several different substrings of the input.  We must therefore define a set of
+rules that remove the possibility of ambiguity.  Let’s first look at an
+example of a regular expression where submatch addressing has several possible
+solutions.
+
+\startexample[example:submatch addressing ambiguities]
+  Apply the regular expression \TypedRegex{(a*)(a*)} on input
+  \TypedString{aaa}.  \intable[table:ambiguous matches] lists all possible
+  submatches for the two subexpressions of the given regular expression.
+
+  \placetable
+    [here]
+    [table:ambiguous matches]
+    {Possible submatches for \TypedRegex{(a*)(a*)} on input \TypedString{aaa}}
+    \starttable[|r|c|c|r|c|c|]
+    \HL
+    \NC \bf \# \NC \bf First \TypedRegex{(a*)} \NC \bf Second \TypedRegex{(a*)}
+    \VC \bf \# \NC \bf First \TypedRegex{(a*)} \NC \bf Second \TypedRegex{(a*)}
+    \NC\AR
+    \HL
+    \NC 1 \NC \SubMatch{0}{0} \NC \SubMatch{0}{0}
+       \VC 11 \NC \SubMatch{1}{1} \NC \SubMatch{1}{1} \NC\AR
+    \NC 2 \NC \SubMatch{0}{0} \NC \SubMatch{0}{1}
+       \VC 12 \NC \SubMatch{1}{1} \NC \SubMatch{1}{2} \NC\AR
+    \NC 3 \NC \SubMatch{0}{0} \NC \SubMatch{0}{2}
+       \VC 13 \NC \SubMatch{1}{1} \NC \SubMatch{1}{3} \NC\AR
+    \NC 4 \NC \SubMatch{0}{0} \NC \SubMatch{0}{3}
+       \VC 14 \NC \SubMatch{1}{2} \NC \SubMatch{2}{2} \NC\AR
+    \NC 5 \NC \SubMatch{0}{1} \NC \SubMatch{1}{1}
+       \VC 15 \NC \SubMatch{1}{2} \NC \SubMatch{2}{3} \NC\AR
+    \NC 6 \NC \SubMatch{0}{1} \NC \SubMatch{1}{2}
+       \VC 16 \NC \SubMatch{1}{3} \NC \SubMatch{3}{3} \NC\AR
+    \NC 7 \NC \SubMatch{0}{1} \NC \SubMatch{1}{3}
+       \VC 17 \NC \SubMatch{2}{2} \NC \SubMatch{2}{2} \NC\AR
+    \NC 8 \NC \SubMatch{0}{2} \NC \SubMatch{2}{2}
+       \VC 18 \NC \SubMatch{2}{2} \NC \SubMatch{2}{3} \NC\AR
+    \NC 9 \NC \SubMatch{0}{2} \NC \SubMatch{2}{3}
+       \VC 19 \NC \SubMatch{2}{3} \NC \SubMatch{3}{3} \NC\AR
+    \NC 10 \NC \SubMatch{0}{3} \NC \SubMatch{3}{3}
+       \VC 20 \NC \SubMatch{3}{3} \NC \SubMatch{3}{3} \NC\AR
+    \HL
+    \stoptable
+  
+  For this particular instance of the problem, there are
+
+    \[\sum_{0 \leq i \leq j \leq k \leq 3} 1 = \binom 6 3\]
+
+  possible pairs; and in general there are
+
+    \[\binom{n + k}{k},\]
+
+  for $n$ \type{a}s and $k$ \TypedRegex{(a*)}||subexpressions.
+\stopexample
+
+As \inexample[example:submatch addressing ambiguities] shows, we have a lot of
+possible submatches to choose from; we would prefer to have only one.
+Therefore, we define the following three rules that serve to identify a unique
+solution, in order of decreasing priority:
+
+\startenumerate
+  \head[leftmost longest rule] Leftmost Longest Rule
+
+  If a regular expression can match more than one substring of the input, the
+  match starting earliest is chosen.  If more than one substring begins at that
+  position, the longest one among them is chosen.
+
+  \head[subexpression rule] Subexpression Rule
+
+  Subexpressions abide by rule \in[leftmost longest rule].  Subexpressions
+  starting earlier in the regular expression take priority over ones starting
+  later.  Matching an empty substring is considered longer than matching no
+  substring at all.
+
+  \head Repeated Matching Rule
+
+  If a subexpression matches more than one substring of the whole match, the
+  last such substring is chosen.  Note that the candidate substrings won't
+  overlap.
+\stopenumerate
+
+\inexamples[example:leftmost longest] \andexample[example:subexpression] show
+how these rules apply to regular expressions.
+
+\startexample[example:leftmost longest]
+  Consider again the regular expression of
+  \inexample[example:submatch addressing ambiguities], \TypedRegex{(a*)(a*)}.
+  Rule \in[leftmost longest rule] tells us that the whole
+  input|<|\TypedString{aaa}|>| must be matched.  This cuts down the result set
+  to that listed in \intable[table:leftmost cutdown].
+
+  \placetable
+    []
+    [table:leftmost cutdown]
+    {Leftmost longest submatches submatches for \TypedRegex{(a*)(a*)} on input
+     \TypedString{aaa}.}
+    \starttable[|c|c|]
+    \HL
+    \NC \bf First \TypedRegex{(a*)} \NC \bf Second \TypedRegex{(a*)} \NC\AR
+    \HL
+    \NC \SubMatch{0}{0}             \NC \SubMatch{0}{3}               \NC\AR
+    \NC \SubMatch{0}{1}             \NC \SubMatch{1}{3}               \NC\AR
+    \NC \SubMatch{0}{2}             \NC \SubMatch{0}{3}               \NC\AR
+    \NC \SubMatch{0}{3}             \NC \SubMatch{3}{3}               \NC\AR
+    \HL
+    \stoptable
+
+  Rule \in[subexpression rule] then tells us to choose the submatch addresses
+  of the last row, since the first subexpression has the longest match in that
+  row.
+\stopexample
+
+\startexample[example:subexpression]
+  Consider the regular expression \TypedRegex{(a|aa)*}.
+  \intable[table:a or aa matches] shows what the different parts of the regular
+  expression match.
+
+  \placetable
+    []
+    [table:a or aa matches]
+    {Submatch addressesing for \type{(a}{\tttf\char`\|}\type{aa)*} on various
+    input}
+    \starttable[|l|c|c|c|c|]
+    \HL
+    \NC \bf Input         \NC \TypedRegex{(a|aa)*}  \NC \TypedRegex{a|aa}
+    \NC \TypedRegex{a}    \NC \TypedRegex{aa}       \NC\AR
+    \HL
+    \NC $ε$               \NC \SubMatch{0}{0}       \NC \SubMatch{-1}{-1}
+    \NC \SubMatch{-1}{-1} \NC \SubMatch{-1}{-1}     \NC\AR
+    \NC \TypedString{a}   \NC \SubMatch{0}{1}       \NC \SubMatch{0}{1} 
+    \NC \SubMatch{0}{1}   \NC \SubMatch{-1}{-1}     \NC\AR
+    \NC \TypedString{aa}  \NC \SubMatch{0}{2}       \NC \SubMatch{0}{2}
+    \NC \SubMatch{-1}{-1} \NC \SubMatch{0}{2}       \NC\AR
+    \NC \TypedString{aaa} \NC \SubMatch{0}{3}       \NC \SubMatch{1}{3}
+    \NC \SubMatch{-1}{-1} \NC \SubMatch{1}{3}       \NC\AR
+    \NC \TypedString{ba}  \NC \SubMatch{0}{0}       \NC \SubMatch{0}{0}
+    \NC \SubMatch{-1}{-1} \NC \SubMatch{-1}{-1}     \NC\AR
+    \HL
+    \stoptable
+
+  The matches on an empty input ($ε$) shows that matching an empty
+  string is to be considered longer than not matching at all.  The matches on
+  input \TypedString{ba} display the leftmost||longest rule in action.  It would
+  be possible to match the longer substring \TypedString{b\REMatch{a}}, but the
+  leftmost match (the empty string before \type{b}) must be chosen instead.
+  The third and fourth row demonstrate how higher||level subexpressions will
+  take priority over lower||level subexpressions.  The fourth row also shows
+  how the repeated matching rules applies to regular expressions of this kind. 
+\stopexample
+
+The rules described above are almost identical to those defined by \POSIX\
+\cite[POSIX92].  There are other schemes, but this is definitely the one most
+often employed in practice.  However, these rules aren’t ideal for all
+situations and have been the subject of some criticism \cite[ClarkeCormack97];
+the main complaint being that structured text|<|such as \XML\ \cite[XML]|>|is
+often not best subjected to leftmost||longest matching.
+
+\placeintermezzo
+  {Why leftmost||longest matching doesn’t agree with \XML.}
+  \startframedtext
+    This is an intermezzo for anyone familiar with \XML\ and who was thinking
+    something along the lines of “why the \dots\ shouldn’t I be using
+    leftmost||longest matching on \XML\ input?”  The answer is simple.
+    Consider the following \XML\ document:
+\startXML
+<p>With a little <em>emphasis</em>, a statement
+can be made much <em>clearer</em>.</p>
+\stopXML
+  Now say that we would like to write a regular expression that extracts the
+  submatch address of the first \type{<em/>}.  The initial response by many
+  beginning regular||expressionists is to write it as \TypedRegex{<em>.*</em>}.
+  That’s simple and straightforward~--~“matches everything between the two
+  \type{em}||delimiters”.  The only problem is that it doesn’t work as
+  expected.  At least not when using leftmost||longest matching.  The regular
+  expression will match everything from the first \type{<em>} to the last
+  \type{</em>}: \TypedString{<p>With a little \REMatch{<em>emphasis</em>, a
+  statement can be made much <em>clearer</em>}.\crlf</p>}.  Clearly not what we
+  want.  There are ways to get around this issue|<|by changing the \type{.}
+  into something less greedy, such as \type{[^<]}|>|but it would be more
+  appropriate if we could simply tell the machinery not to apply the
+  leftmost||longest rule in every case.  \insection[greedy and non-greedy
+  matching] introduces a way to do just this.
+  \stopframedtext
+
+In conclusion, remember that submatch addressing, as described here, does
+{\em not} alter any of the properties of the regular expressions we’re dealing
+with, so we retain all the wonderful features of regular expressions, while
+making them easier to use for practical applications.
+
+
+\section
+  [greedy and non-greedy matching]
+  {Greedy and Non||greedy Matching}
+
+To solve the problem inherent in the definition of the \POSIX\ matching rules
+described at the end of the previous section, the notion of \Term{greedy} and
+\Term{non||greedy} matching was thought of.  Generally, a quantifier, such as
+\TypedRegex{*} (Kleene Star) matches the leftmost||longest instance of whatever
+it quantifies.  There are, however, occasions where you would prefer that it
+matched the leftmost||{\em shortest} instance of whatever it quantifies.
+Therefore, the quantifier||modifier \TypedRegex{?} was added to \Perl\ and,
+later, many other tools that deal with regular expressions and structured text.
+\intable[table:lazy quantifiers] lists the
+\index{quantifier+non||greedy}\Term{non||greedy}|<|sometimes referred to as
+\index{quantifier+lazy}\Term{lazy}|>|quantifiers that \Perl\ has at its
+disposal.  They match as few concatenations of whatever they contain, while
+making sure that an overall match will be made.
+
+\placetable
+  [here]
+  [table:lazy quantifiers]
+  {Non||greedy quantifiers in \Perl}
+  \starttable[|l|l|]
+  \HL
+  \NC \bf Quantifier
+  \NC \bf Effect on $r$, the quantified regular expression \NC\AR
+  \HL
+  \NC \type{*?} \NC Matches as few concatenations of $r$ as possible \NC\AR
+  \NC \type{+?} \NC Matches as few concatenations of $r$ as possible, but at
+                    least one \NC\AR
+  \NC \type{??} \NC Matches zero or one concatenations of $r$, as few as
+                    possible \NC\AR
+  \NC \tttf\leftargument$n$,$m$\rightargument\type{?} \NC
+      Matches $n$ to $m$ concatenations of $r$, as few as possible \NC\AR
+  \HL
+  \stoptable
+
+\indent\index{quantifier+greedy}\Term{Greedy} quantifiers are exactly those
+that we have already defined (\TypedRegex{*}, \TypedRegex{+}, \TypedRegex{?},
+\TypedRegex-{-$n$\TypedRegex{,}$m$\TypedRegex-}-) and require no additional
+syntax or semantics.
+
+\stopcomponent

@@ -1,0 +1,9 @@
+ast.o: ast.c mempool.h ast.h private.h
+compile.o: compile.c private.h mempool.h ast.h compile.h
+execute.o: execute.c mempool.h private.h ast.h parse.h compile.h \
+  execute.h match.h
+match.o: match.c private.h match.h
+mempool.o: mempool.c private.h mempool.h
+parse.o: parse.c mempool.h ast.h parse.h private.h
+patternmatcher.o: patternmatcher.c mempool.h private.h ast.h parse.h \
+  compile.h execute.h match.h

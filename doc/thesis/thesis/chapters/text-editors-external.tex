@@ -1,0 +1,432 @@
+\startcomponent thesis/chapters/text-editors-external
+
+\project masters-project
+\product thesis
+
+\chapter
+  [text editors - external]
+  {Text Editors: External Functionality}
+
+
+So far we’ve devoted all our typesetting to languages, grammars, and, in
+particular, regular expressions and finite automata.  It’s time we begin
+discussing the setting in which the knowledge we’ve gained will be useful,
+namely {\em text editors}.
+
+“Eh, what's a text editor, then?”, we hear our hypothetical reader
+ask.  Well, in a broad sense, any piece of computer software that allows its
+user to create and alter a string can be said to be a text editor; though, we
+would be bending the meaning of \Term{text} a bit.  Most commonly, however, we
+consider certain software to be text editors, others word processors or musical
+score editors.  The difference between a text editor and a word processor is
+the most important for they are the two that are most commonly confused.
+
+A \DefineTerm{word processor} is a piece of software that usually comes bundled
+with desktop publishing software.  It presents the user with a visual
+representation of how the document being edited will look upon printing while
+it’s still being altered by said user.  This editing methodology is commonly
+referred to as “What You See Is What You Get”, or its better||known acronym --
+\WYSIWYG, and has become popular among users otherwise unfamiliar with
+computers, as it tends to be easy to use (and misuse, or even abuse).  A word
+processors is used for typesetting documents for printouts.  Examples include
+OpenOffice.org \cite[OpenOffice]\ and LyX \cite[LyX].
+
+A \DefineTerm{text editor} is a piece of software that usually comes bundled
+with the operating system of a computer.  It presents the user with a visual
+representation of the actual contents of the document being
+edited\footnote{Actually, some won’t even provide the luxury of a visual
+representation, requiring its user to issue special commands to display a given
+portion of the document.  We don’t need to go into the details.}.  This is
+useful if your document doesn’t require advanced typesetting (or if you prefer
+to issue the typesetting commands yourself, instead of letting an inferior
+piece of computer software do it for you).  Typical examples of such documents
+are software source code, which is the specification of a piece of software,
+written in a programming language understood by the computer, or a
+configuration file of the operating system.  Good examples of text editors are
+\ED, \Qed, \VI, \Vim, and \EMACS\ \cite[Stallman81,Stallman02].
+
+In this chapter and the next we will discuss the external and internal workings
+of a text editor, which will make it possible for us to reason about the role
+of regular expressions in text editors.  We begin with the most basic
+functionality and work our way toward more advanced topics as we gain the
+necessary knowledge.
+
+
+\section{Some Necessary Definitions}
+
+To discuss the workings of a text editor, we must first define some of the
+new terms we’ll be using.
+% TODO: a bit too short
+
+\startdefinition
+  A \DefineTerm{file} or \DefineTerm{document} is a finite sequence of symbols,
+  found on some storage media, e.g., a hard drive, \CDR, \CDRW, \DVD, magnetic
+  tape, or similar.  We only concern ourselves with files whose its contents is
+  intelligible to us, e.g., an email, software source code, or a master’s
+  thesis.
+\stopdefinition
+
+\startdefinition
+  A \DefineTerm{buffer} is the text editors representation of a document.  It
+  usually consists of the contents of the document plus any alterations that
+  have been made to it that are yet to be written to the storage media.  This
+  representation is often stored in a computer’s random||access memory, or
+  \RAM; however, certain buffering strategies only keep the regions of a file
+  currently being viewed and edited in memory.  One often speaks of “editing a
+  buffer” when one is editing a file in a text editor, as the text editor
+  mostly deals in terms of buffers, not files.  For mathematical purposes, we
+  will denote the set of buffers as $\Buffers$.
+\stopdefinition
+
+\startdefinition
+  Each buffer in a text editor has a notion of the current position where the
+  user wants to make changes, known as \DefineTerm{point}.  There’s only one
+  point in a given buffer.  In this manuscript we’ll use the word
+  “point” as a proper noun (though, without initial capitalization),
+  i.e., allowing constructions like “at point”, “of point”, and “move point”.
+\stopdefinition
+
+% TODO: do we need to define marks and regions?  Are they interesting?
+%\startdefinition
+%  A buffer also has a set of \DefineTerm{marks} associated with it.  A mark is
+%  a saved point, i.e., a position in the buffer.  Marks are often used for more
+%  advanced editing commands|/|operations and to restore point to a previous
+%  position.
+%\stopdefinition
+%
+%\startdefinition
+%  Finally, a buffer 
+%\stopdefinition
+
+With these definitions, we can give a mathematical representation of a buffer
+$B$:
+
+  \[B = (w, p),\]
+
+where $w$ in $Σ^∗$ is the text of the buffer and $p$ in $\naturalnumbers$ is
+the position of point in the buffer.  Just to make things as clear as some very
+clear substance, we also define the term \Term{text}.
+
+\startdefinition
+  A \DefineTerm{text} is a finite sequence of symbols and is considered to be a
+  term equivalent to the term \Term{string} defined in
+  \indefinition[definitions:definition:string].
+\stopdefinition
+
+
+\section{Inserting Symbols}
+
+The single most important functionality of any text editor is to allow its user
+to insert symbols into a buffer.  With the \Term{insert operation} we can
+create any sequence of symbols.
+
+\startdefinition
+  The \DefineTerm{insert operation} of a text editor inserts a symbol into a
+  buffer at point.  Mathematically, we may define this as a function that takes
+  a buffer and a symbol as arguments and gives a new buffer as a result:
+
+  \[\Finsert\colon \Buffers×Σ → \Buffers, \\
+    \Finsert((w, p), b) = (a_1 a_2 \dots a_{p - 2} a_{p - 1} b
+                           a_p a_{p + 1} \dots a_{|w|}, p + 1).\]
+
+  Note that we move point forward one symbol so that the next insert
+  operation will take place after the symbol that was just inserted.
+\stopdefinition
+
+\starttheorem
+  Using only the insert operation, any string can be rendered.
+\stoptheorem
+
+\Proof  We use construction to create the string $a_1 a_2 \dots a_n$:
+
+  \[(a_1 a_2 \dots a_n, p) =
+        \underbrace{\mathstrut\Finsert(\Finsert(\dots\Finsert(}_{n \text{ times}}
+          (ε, 1), a_1), a_2), \dots, a_n).\]
+\QED
+
+In most text editors, simply typing the symbols you would like to insert on the
+keyboard (or other computer input device) will invoke thu \Finsert\ function.
+Some text editors, however, require that you enter a special \Term{editing
+mode} where this is true.  Such text editors often have many different
+\Term{editing modes}, such as the just described \Term{insert mode}, a
+\Term{command mode} where the text editor expects the user to type in the
+\quotation{names} of commands to be executed (such as the command to change
+mode), and perhaps a \Term{replace mode} where symbols are replaced instead of
+simply shifted to the right when new symbols are inserted as the definition
+above suggests.  We are jumping the gun here, as we will discuss editing modes
+in greater detail later on; however, it is important to note that not all text
+editors work alike.
+
+
+\section{Deleting Symbols}
+
+The second most important functionality of any text editor is to allow its user
+to delete symbols from a buffer.  With the \Term{insert operation} and
+\Term{delete operation} we can transform any sequence of symbols into any other.
+
+\startdefinition
+  The \DefineTerm{delete operation} of a text editor deletes a symbol from a
+  buffer at point.  Mathematically we define this as
+
+  \startnathequation
+    \Fdelete\colon \Buffers → \Buffers, \\
+    \Fdelete((w, p)) = \wall
+      (a_1 a_2 \dots a_{p - 2} a_{p - 1} a_{p + 1} a_{p + 2} \dots a_{|w|}, p'), \\
+      \qquad p' = \max(\min(p, |w|), 1). \return
+  \stopnathequation
+\stopdefinition
+
+\starttheorem
+  Using only the insert and delete operations, any string can be transformed
+  into any other.
+\stoptheorem
+
+\Proof  We use construction to create the string $a_1 a_2 \dots a_n$:
+
+  \[(a_1 a_2 \dots a_n, p') = \\ \quad
+      \underbrace{\mathstrut\Finsert(\Finsert(\dots\Finsert(}_{n \text{ times}} \\ \qquad
+      \underbrace{\mathstrut\Fdelete(\Fdelete(\dots\Fdelete(}_{m \text{ times}}
+        (b_1 b_2 \dots b_m, p)))), \\ \qquad
+      a_1), a_2), \dots, a_n).\]
+\QED
+
+
+\section
+  [moving point]
+  {Moving Point}
+
+The third most important functionality of any text editor is to allow its user
+to alter the position of point.
+
+\startdefinition
+  The \DefineTerm{move||to operation} of a text editor moves point to a new
+  position in the buffer:
+
+  \startnathequation
+    \Fmoveto\colon \Buffers×\naturalnumbers → \Buffers, \\
+    \Fmoveto((w, p), q) = (w, q'),\qquad q' = \min(q, |w| + 1).
+  \stopnathequation
+\stopdefinition
+
+It’s worth noting that most text editors allows point to be moved relative to
+its current position, which in most cases works to the users advantage---humans
+are better at doing relative positioning than absolute positioning.
+
+
+\section{Intermission~--~A Text Editing Session}
+
+So far in this chapter, we’ve only discussed low||level operations of text
+editors.  It would be a very painstaking task to edit text using only these
+operations.  It is therefore time to show some examples of how modern text
+editors present their users with the contents of buffers and how they allow
+them to navigate and alter their contents.  We’ll use \Vim\ as our editor, as
+it provides many nice high||level operations and is almost ubiquitously
+available.
+
+\placefigure
+  [here]
+  [figure:vim startup]
+  {\Vim\ just after startup.}
+  {\externalfigure[vim startup]}
+
+When you run \Vim\ from a computer terminal (or other) you will be presented
+with the display showed in \infigure[figure:vim startup].  The bottom two lines
+are for status messages and advanced command input, the rest is for a buffer’s
+contents.  Rows in the display that are not occupied by a line from the buffer
+are marked with tildes, “\type{~}”, and have a bluish color.  From the
+display we can deduce that we haven’t loaded a file into \Vim, as the blue
+status line says so.  Don’t worry about the anomalous {\tt line: 0 of 1} in
+the status line, it will pick up as we begin inserting text into our buffer.
+Finally, the black rectangle displays where point is.  Point is always just
+before the symbol over which the black rectangle resides.
+
+Let us begin by inserting some text into our buffer.  We’ll be writing an email
+to our good friend, World.  To allow us to insert text, we must tell \Vim\ to
+activate \Term{insert mode}, which is done by typing \KbdType{i}.  The display
+changes, and \type{-- INSERT --} is displayed in the status line (see
+\infigure[figure:vim insert-0]) to show that we’ve entered insert mode.
+Once in insert mode, anything we type will go into the buffer.  Now type
+\KbdType{H e l l o}\KbdKey{Space}\KbdType{W o r l d !}.  You should have
+display similar to that in \infigure[figure:vim insert-1].
+
+\placefigure
+  [here]
+  [figure:vim insert-0]
+  {\Vim\ after entering insert mode.}
+  {\externalfigure[vim insert-0]}
+
+\placefigure
+  [here]
+  [figure:vim insert-1]
+  {Typing \type{Hello World!} in \Vim.}
+  {\externalfigure[vim insert-1]}
+
+Now, let’s be courteous and ask World how she’s doing: type
+\KbdType{H o w}\KbdKey{Space}\KbdType{a r e}\KbdKey{Space}\KbdType{y o u}%
+\KbdKey{Space}\KbdType{h o l d i n g}\KbdKey{Space}\KbdType{u p ?}; the result
+is in \infigure[figure:vim insert-2].
+
+\placefigure
+  [here]
+  [figure:vim insert-2]
+  {Inserting \type{How are you holding up?} in \Vim}
+  {\externalfigure[vim insert-2]}
+
+But wait a minute, we’d like the two sentences to appear on separate lines.  We
+must go back to just after the \type{!} and insert a line||feed.  To do this,
+we must first exit insert mode and return to \Term{command mode}.  This is done
+by pressing the \KbdKey{Esc} key on your keyboard.  Once we’ve done that, we
+must move point to said location.  We move point left by one symbol by issuing
+the command \KbdType{h}.  Press the \KbdType{h} key until the black rectangle
+is over the space following the \type{!}, as in \infigure[figure:vim move-1].
+Once here, we enter insert mode again (\KbdType{i}) and press the \KbdKey{Enter} or
+\KbdKey{Return} key on our keyboards.  The display is updated and should look like
+that in \infigure[figure:vim insert-3].  Note that \Vim\ has removed the space
+for us, it knows that we usually don’t want a space at the beginning of a new
+line.
+
+\placefigure
+  [here]
+  [figure:vim move-1]
+  {Moving point left in \Vim.}
+  {\externalfigure[vim move-1]}
+
+\placefigure
+  [here]
+  [figure:vim insert-3]
+  {Inserting a line||feed in \Vim.}
+  {\externalfigure[vim insert-3]}
+
+Furthermore, we want to keep our message short, so we’d like to trim the second
+sentence somewhat.  Exit insert mode by pressing \KbdKey{Esc} again and move
+over to the space just after the word \type{you} by issuing a series of
+\type{l} commands (by pressing the \KbdType{l} key), which moves point one
+symbol to the right each time.  \infigure[figure:vim move-2] displays the
+result.
+
+\placefigure
+  [here]
+  [figure:vim move-2]
+  {\Vim\ after moving point right.}
+  {\externalfigure[vim move-2]}
+
+Once there, press the \KbdType{x} key to issue the command to delete the symbol
+at point.  Do this until point is just before the \type{?} symbol, rendering
+\infigure[figure:vim delete-1].
+
+\placefigure
+  [here]
+  [figure:vim delete-1]
+  {\Vim\ After Deleting Symbols}
+  {\externalfigure[vim delete-1]}
+
+Now we’ve finished typing our email.  We can save it to a file, continue
+editing it, or a bunch of other tasks, but we’ll not delve any further into
+the possibilities that our text editor presents us with.  We’ll, however,
+summarize some of the lessons we’ve learned from this little text editing
+task:
+
+\startitemize[1]
+  \item \Vim\ has editing modes, two of which are \Term{insert mode} and
+    \Term{command mode}.
+  \item \Vim\ has commands to move point relative to its current position,
+    e.g., \type{h} and \type{l}.
+  \item The \type{x} command|/|key allows us to remove an unwanted symbol at
+    point.
+  \item Although the contents of the buffer is only a long sequence of symbols,
+    \Vim\ displays it as an array of lines.  Special symbols within the
+    contents of the buffer tells \Vim\ where lines should be broken.  These
+    symbols may be inserted by the user by pressing the \KbdKey{Enter} or
+    \KbdKey{Return} keys on their keyboards and although conventions on exactly
+    what symbols break lines differ across computer platforms, \Vim|<|and most
+    other text editors|>|will understand them all, so the user only needs to
+    know to type one of the designated keys on the keyboard.
+\stopitemize
+
+Here ends this intermission.  We’ll now continue describing more advanced text
+editor functionality, most of which build upon the foundation of that already
+described.  We’ll cover searching for substrings, editing modes, undo|/|redo,
+and conclude with a discussion on command sets.
+
+
+\section
+  [search command]
+  {Searching}
+
+Scanning a text using only ones eyes and by moving point around one symbol at a
+time is highly inefficient for larger texts.  Therefore, most text editors
+provide a way to search for a substring in a buffer.  This is thus another
+pattern matching problem and, as we’ve already seen in \inchapter[patterns],
+regular expressions work out great for this task.  Many text editors in fact
+utilize regular expressions for searching.
+
+The search operation can be broken down into a sequence of steps:
+
+\startenumerate
+  \item The user invokes the \Term{search} command.
+
+  \item The text editor provides a mean for user input for reading the desired
+    pattern to search for.
+
+  \item Once the user has terminated the pattern, the text editor feeds the
+    pattern to a pattern matcher generator|<|making sure to mark the pattern
+    for submatch addressing|>|and the contents of the buffer to the resulting
+    pattern matcher.
+
+  \item If the pattern matcher answers “yes”, the text editor extracts the
+    resulting submatch addresses and moves point to the beginning of the match,
+    i.e., the first component of the submatch address of the pattern.
+    Otherwise, it leaves point where it was and notifies the user that it has
+    failed in finding the given pattern.
+\stopenumerate
+
+
+\section{Editing Modes}
+
+As discussed earlier, some editors have what is known as \DefineTerm{editing
+modes} and behave differently depending on what mode they’re currently in.
+Modes differ by how they interpret the keys that the user types on their
+keyboard.  Some typical modes include
+
+\startterm{Insert Mode}
+  In this mode, pressing a key on the keyboard inserts the symbol associated
+  with that key.  This operation is commonly referred to as \Term{self-insert}
+  as the key pressed inserts “itself”, i.e., the symbol associated with that
+  key.  Some key sequences including modifier keys such as \KbdKey{Ctrl} and
+  \KbdKey{Meta}/\KbdKey{Alt} may have other effects.
+\stopterm
+
+\startterm{Command Mode}
+  In this mode, keys are associated with a command.  We saw, in our intermission
+  on editing with \Vim, that in command mode that typing \KbdType{h} would
+  invoke a command that moved point one symbol to the left.  Having a command
+  mode allows advanced editing commands to be associated with a single
+  keystroke, which speeds up many editing tasks.
+\stopterm
+
+\startterm{Command||line Mode}
+  The final mode we’ll discuss is a mode where more advanced commands are
+  executed.  In command||line mode, a text editor will read longer commands
+  from the user.  An example of such a command is the search command discussed
+  in \insection[search command], which reads a pattern provided by the user.
+\stopterm
+
+Many editors combine the first two modes and associates key sequences
+involving modifier keys to execute the commands provided in command
+mode; \EMACS\ works this way.
+
+
+% TODO: should we describe how it works internally (here or later?)
+\section{Undoing and Redoing Changes}
+
+Any self||respecting text editor soon realizes that the weakest link in the
+editing chain of command is its user.  Therefore, they provide a way for the
+user to undo alterations made to the text during the editing session.  To
+provide additional protection against an unwanted undo, a way to redo
+previously undone changes is often also available.
+
+
+% TODO: this needs to be written...suck
+%\section{Command Sets}
+
+\stopcomponent

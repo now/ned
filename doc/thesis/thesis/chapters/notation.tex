@@ -1,0 +1,433 @@
+\startcomponent thesis/chapters/notation
+
+\project masters-project
+\product thesis
+
+\title{Notation and Typographical Conventions}
+
+
+This manuscript uses a rather large number of different notations and
+typographical conventions that intend to make reading it just a little bit
+easier than it would have been without them.  As these conventions are
+numerous, we’ll list them all here for easy reference.  So, if you find
+yourself lost for the proper meaning of a notation or convention, do refer to
+this collection of them.
+
+
+\subject{Mathematics}
+
+\notation{$\{a_1, a_2, \dots\}$} Set.  The unordered set of
+  \DefineTerm{elements} $a_1$,~$a_2$, \dots.
+
+\notation{$(a_1, a_2, \dots, a_n)$} Tuple.  The ordered $n$||tuple of elements
+  $a_1$,~$a_2$, \dots,~$a_n$.
+
+\notation{$\naturalnumbers$} Natural.  The infinite set of natural numbers:
+  $\{0, 1, 2, 3, \dots\}$ or $\{1, 2, 3, 4, \dots\}$, whichever is more
+  appropriate for the occasion.
+
+\notation{$\integers$} Zahl.  The infinite set of integers, i.e.,
+  $\{\dots, -2, -1, 0, 1, 2, \dots\}$.
+
+\notation{$x ∈ A$} Set membership.  Element $x$ is a member of set $A$.
+
+\notation{$∉$, $≠$, $≮$, $≯$, \dots}  Negation.  A stricken relation is the
+  inverse to the non||stricken relation.  For example, $1⋅2 = 2$, but $2⋅2 ≠ 5$.
+
+\notation{$i$, $j$, $k$, $m$, and $n$} Integer variables.  The variables $i$, $j$,
+  $k$, $m$, and $n$ denote integers, i.e., $i, j, k, m, n ∈ \integers$.
+
+\notation{$i_2$, $i_{10}$, $i_{16}$} Number bases.  The integer $i$ expressed in
+  binary, decimal, and hexadecimal, respectively.  Binary numbers are expressed
+  using 0 and 1; decimal numbers using 0 through 9; hexadecimal using 0 through
+  9 and then A through F.
+
+\notation{$A$, $B$, and $C$} Set variables.  Arbitrary sets of elements;
+  sometimes with indexes, such as $A_1$, $A_2$, $A_3$, \dots.
+
+\startnotation{$A × B$}
+  Cartesian product. The set of all pairs of elements of $A$ and $B$:
+
+    $$A × B = \{\,(a, b) \mid a ∈ A ∧ b ∈ B\,\}.$$
+\stopnotation
+
+\notation{$f\colon A → B$} Function signature.  Function $f$ maps each
+  element of $A$ (known as the \DefineTerm{parameter}) to an element of $B$
+  (known as the \DefineTerm{result}).
+
+\notation{$f(x_1, x_2, \dots, x_n)$} Function application. Function
+  $f\colon A_1 × A_2 × \dots × A_n → B$ applied to \DefineTerm{arguments}
+    $x_1 ∈ A_1$,~$x_2 ∈ A_2$, \dots,~$x_n ∈ A_n$.
+
+\notation{$P(x)$} Predicate function. A function $P\colon A → \{0, 1\}$
+  returning a truth value ($0$~--~false, $1$~--~true).  Such functions are
+  often referred to as a boolean function, in honor of the inventor of “the
+  calculus of logic” or “boolean algebra”, George Boole \cite[Boole47].
+
+\notation{$\{\,x \mid P(x)\,\}$} Set construction.  The set of all $x$ such
+  that $P(x) = 1$.
+
+\startnotation{\Ordo{f(n)}}
+  Ordo function.  The set of functions such that
+
+    $$\Ordo{f(n)} = \{\,g(n) \mid ∃ c, n_0(∀ n ≥ n_0(0 ≤ g(n) ≤ cf(n)))\,\}.$$
+\stopnotation
+
+\notation{$\lg x$} Base||$2$ Logarithm.  The logarithm with base $2$ of $x$
+($\lg x = \log_2 x$).
+
+\startnotation{$A ∪ B$}
+  Set union.  The union of sets $A$ and $B$, i.e., the set of elements that
+  belong to either $A$ or $B$:
+  
+    $$A ∪ B = \{\,x \mid x ∈ A ∨ x ∈ B\,\}.$$
+\stopnotation
+
+\startnotation{$A ∩ B$}
+  Set intersection.  The intersection of sets $A$ and $B$, i.e., the set of
+  elements that belong to both $A$ and $B$:
+  
+    $$A ∩ B = \{\,x \mid x ∈ A ∧ x ∈ B\,\}.$$
+\stopnotation
+
+\startnotation{$A \setminus B$}
+  Set difference.  The difference between sets $A$ and $B$, i.e., the set of
+  elements that belong to $A$ but not $B$:
+
+    $$A \setminus B = \{\,x \mid x ∈ A ∧ x ∉ B\,\}.$$
+\stopnotation
+
+\notation{$⋃_{i ∈ B} A_i$} Set union (iteration).  The union
+  of sets $A_i$, for all elements $i$ in set $B$; $B$ is often referred to as
+  an index set.  The condition on $i$ can of course be generalized to any
+  predicate $P(i)$, though it most often takes the form of set membership.
+
+% TODO: fix these four
+\notation{$A \subseteq B$} Subset.  Set $A$ is a subset of $B$, i.e., for all
+  $x ∈ A$, $x ∈ B$.
+
+\notation{$A \subsetneq B$} Proper subset.  Set $A$ is a proper subset of
+  $B$, i.e., $A \subseteq B$ but $A ≠ B$.
+
+\notation{$A \supseteq B$} Superset.  Set $A$ is a superset of $B$, i.e.,
+  for all $x ∈ B$, $x ∈ A$.
+
+\notation{$A \supsetneq B$} Proper superset.  Set $A$ is a proper superset
+  of $B$, i.e., $A \supseteq B$ but $A ≠ B$.
+
+\notation{\PowersetOf{A}} Power set.  The power set of $A$, i.e., the set of
+  all possible subsets of $A$.
+
+\notation{$\sum_{i=1}^n a_i$} Summation.  The sum $a_1+a_2+⋯+a_n$.
+
+\notation{$\prod_{i=1}^n a_i$} Product.  The product $a_1a_2⋯a_n$.
+
+\notation{$n!$} Factorial.  The product $\prod_{k=1}^n k$, for $n>0$, and $1$
+for $n=0$.  The factorial of $n$, $n!$, is the number of ways to
+arrange $n$ distinct objects.  Each way in which they may be arranged is known
+as a \Term{permutation} of the objects.
+
+\startnotation{$\tbinom{k}{n}$}
+  Binomial Coefficient. The binomial coefficient is the number of ways to
+  choose $k$ objects from a set of $n$ elements ($k≤n$) and is given by
+  the equation
+  
+    $$\tbinom{k}{n} = \frac{k!}{(k - n)!n!}.$$
+\stopnotation
+
+Large numbers in text are separated by thin space and a dot is used for the
+decimal point, e.g., “\digits{1,000,000} is a relatively small number nowadays,
+whatever the topic, yet the number \digits{3.141,592,654}\dots\ is still of
+great interest, even to people who are a bit picky with what they eat.”
+
+
+\subject{Languages, Regular Expressions, and User Input}
+
+Below you’ll find the notation used when discussing languages, regular
+expressions, and user input.
+
+\notation{$L$} Language variable.  The variable $L$ denotes an arbitrary
+  language, sometimes with indexes: $L_1$,~$L_2$, \dots.
+
+\notation{$L_1∘L_2$ or $L_1L_2$} Concatenation/Juxtaposition.  The
+  concatenation of languages $L_1$ and $L_2$.
+
+\notation{$L^∗$} Closure.  The closure of language $L$.
+
+\notation{$L^+$} Positive closure.  The positive closure of language $L$.
+
+\notation{$r$} Regular||expression variable.  The variable $r$ denotes an
+  arbitrary regular expression, sometimes with indexes: $r_1$,~$r_2$, \dots.
+
+\notation{$L(r)$} Language.  The language described by regular expression $r$.
+
+\notation{$r_1∘r_2$ or $r_1r_2$} Concatenation/Juxtaposition.  The
+  concatenation of the regular expressions $r_1$ and $r_2$.
+
+\notation{$r_1 \Alt r_2$} Union.  The union of regular expressions $r_1$ and
+  $r_2$.
+
+\notation{$r^∗$} Closure. The closure of the regular expression $r$.
+
+\notation{$r^+$} Positive closure.  The positive closure of regular expression
+  $r$.
+
+When discussed from a mathematical standpoint, the symbols comprising regular
+expressions are rendered no differently than other mathematical symbols.
+Otherwise, when a regular expression is typed by the user|<|or when not
+discussed from a strictly mathematical standpoint|>|at a computer terminal it
+is typeset \TypedRegex{like this}.
+
+Input typed by the user is typeset \TypedString{like this} and the match of a
+regular expression within its input is typeset \REMatch{like this}.
+
+Computer terminal sessions are typed in a \type{fixed-width typeface} and have
+a distinctive background:
+
+\startshellsession
+% ls \
+> -la
+\stopshellsession
+
+Commands are typed at the “\type{% }” prompt.  Long commands are
+broken into multiple lines by ending each line with a \type{\} and continuation
+lines begin with the string “\type{> }”, which isn’t part of the input.  
+
+While we’re at it, commands that may be run at a computer terminal prompt are
+displayed \Command{likethis} in running text.  This notation is borrowed from
+the \UNIX\ system manual pages, where commands are described in the first
+section of the manual.  This means that the command \Command{man} belongs to
+the first section of the manual and its manual pages can be accessed by running
+it as follows:
+
+\startshellsession
+% man 1 man
+\stopshellsession
+
+Finally, whenever a user types input into a text editor or other pieces of
+software, the sequence of keystrokes on the keyboard is rendered
+\KbdType{l i k e}\KbdKey{Space}\KbdType{t h i s}.  Note how special characters
+like \KbdKey{Space}, \KbdKey{Ctrl}, and \KbdKey{Tab} also are rendered
+specially.
+
+
+\subject{Finite Automatons}
+
+Some notational conventions are also used when discussing finite automata.
+
+\notation{$⟨s, w⟩$} Configuration.  A pair describing the state of a finite
+  automaton.  The variable $s$ is a state and $w$ a string. 
+
+\notation{$⟨s, u, w, v⟩$}  Tagged Configuration.  A quadruple describing the
+  state of a tagged finite automaton.  The variable $s$ is a state, $u$ is the
+  part of the input read so far, $w$ is the part of the input that remains, and
+  $v$ is a tag||value function.
+
+\notation{$\Yields$} Yields.  Binary relation between two configurations of a
+  finite automaton.
+
+\notation{$\RTCYields$} Reflexive Transitive Closure of Yields.  The
+  reflexive transitive closure of the \Term{yields} relation between
+  configurations of a finite automaton.
+
+\notation{$\UnYields$} Unambiguously Yields.  Binary relation between
+  configurations of a tagged finite automaton.
+
+\notation{$\RTCUnYields$} Reflexive Transitive Closure of Unambiguously Yields.
+  The reflexive transitive closure of the \Term{unambiguously yields} relation
+  between configurations of a tagged finite automaton.
+
+When representing finite automata as transitions diagrams, transitions and
+states of particular interest are \color[activetrans]{highlighted}.
+
+
+\subject{Character Symbols}
+
+\index{character symbol}Character symbols will be important to us in this
+manuscript.
+
+\notation{\CharacterName{black star}} Character Name.  The name of a character
+  symbol as defined by \Unicode\ or \ASCII\ depending on context.
+
+\notation{\CodePoint{2605}} Code Point.  The position of a character symbol in
+  the \Unicode\ character set.
+
+(The character symbol described in the two examples above is $\bigstar$.)
+
+
+\subject{\BNF\ Grammars}
+
+\index{grammar}\index[BNF grammar]{\BNF\ grammar}\BNF\ is a metasyntax for
+describing context||free grammars.  It sees great usage when discussing
+programming languages and communication protocols.  The \BNF\ syntax was
+originally named after \Name{John}{Backus} (Backus Normal Form) and later, due
+to \Name{Donald}{Knuth}’s influence \cite[Knuth64], also \Name{Peter}{Naur}
+(Backus||Naur Form) awarding his contributions to the
+\index[Algol]{\Algol}\Algol\ 60 report \cite[Naur63, AhoSethiUllman87].
+
+A \BNF\ grammar|<|as typeset in this document|>|will have the general form of
+the \BNF\ grammar below describing the way integers are formed in a base ten
+system using western digits:
+
+\startbnfgrammar[]
+<number>: <digit> | <digit> <number>
+<digit>: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+\stopbnfgrammar
+
+A rough translation to English of the above grammar is:
+
+\startblockquote
+  A \<number> consists of|/|is ($\to$) either a
+  \<digit> or ($\,|\,$) a \<digit> followed by another \<number>---which is at
+  least another digit long.  A \<digit> consists of any of the symbols
+  \type{0}, \type{1}, \dots, \type{9}.
+\stopblockquote
+
+Formally, \<number> and \<digit> are known as
+\index{grammar+nonterminal}\Term{nonterminals} and \type{0}, \type{1},
+through \type{9} as \index{grammar+terminals}\Term{terminals}; a vertical bar
+($\,|\,$) indicates \index{grammar+choice in}\Term{choice}.
+
+
+\subject{Algorithms}
+
+\index{algorithm}Algorithms are listed using \index{pseudocode}pseudocode.
+The input and output to the algorithm are listed above the algorithm itself,
+which uses a notation reminiscent of many of the programming languages that
+descend from \index{\Algol}\Algol\ \cite[Naur63], such as \index{Ruby}Ruby
+\cite[Thomas04]\ or \index[C]{\CLang}\CLang\ \cite[KernighanRitchie88].
+
+\inalgorithm[algorithm:euclides]\ displays the Euclidian algorithm that finds
+the greatest common divisor of two integers.
+
+\placealgorithm
+  []
+  [algorithm:euclides]
+  {The Euclidian Algorithm.}
+  {\startalgorithmio
+     \sym{Input:} Two integers $m$ and $n$.
+     \sym{Output:} The greatest common divisor (gcd) of $m$ and $n$.
+   \stopalgorithmio
+\startPSEUDO
+while $n ≠ 0$ do
+  $r ← m \bmod n, m ← n, n ← r$
+return $|m|$
+\stopPSEUDO
+}
+
+The arrow “←” used in the algorithm above is what we’ll refer to as the
+\DefineTerm{assignment} operator.  The operation “$m ← n$” means that the value
+of variable $m$ is to be replaced by the value of variable $n$.  The arrow “↔”
+is a shorthand for swapping the values of two variables $m$, $n$:
+$m ↔ n \equiv t ← m, m ← n, n ← t$, where $t$ is an unbound|<|new|>|variable
+acting as a temporary intermidiary between the two variables’ values.
+
+We will also be using some data structures when writing our algorithms:
+
+\notation{$Q \Push x$} Push.  Push element $x$ onto \index{queue}queue or
+  \index{stack}stack $Q$.  If $Q$ is a queue, append $x$ to the end of $Q$;
+  otherwise, push $x$ onto the top of $Q$.
+
+\notation{$x \Pop Q$} Pop.  Pop element $x$ off of queue or stack $Q$.  If $Q$
+  is a queue, set $x$ to the first element of $Q$; otherwise, set $x$ to the
+  topmost element of $Q$.  Then remove the chosen element.
+
+
+\subject{Flowcharts}
+
+\index{flowchart}Flowcharts are used to give a visual overview of the flow of
+information in a system.  In this manuscript, they are mainly used as a visual
+representation of algorithms.
+
+A flowchart is a set of shapes interconnected by arrows.  The shapes represent
+entities in the system, and arrows represent the interconnections between them.
+
+The entities we’ll be using are displayed in
+\infigure[figure:flowchart entities].  As an example of a flowchart,
+\infigure[figure:digestive system]\ displays a simplification of the human
+digestive system.
+
+\placefigure
+  [here]
+  [figure:flowchart entities]
+  {Flowchart entities used in this manuscript.}
+  {\FLOWchart[flowchart entities]}
+
+
+\placefigure
+  [here]
+  [figure:digestive system]
+  {A simplified representation of the human digestive system as a flowchart.}
+  {\FLOWchart[digestive system]}
+
+
+\subject{Miscellany}
+
+{\URL}s are typeset in a fixed||width typeface that looks \from[likethis]\ and
+are “clickable” in the interactive screen version (\PDF\ \cite[PDF03]) of
+this manuscript. Thus, if you click it with the left mouse button, you will be
+taken to the document to which the \URL\ refers to by your web browser;
+hopefully not Microsoft Internet Explorer which even \CERT\ and Microsoft
+itself has deemed unusable \cite[Krebs04, Boutin04]---there, the first, and
+hopefully last, semi||political statement in this manuscript.
+
+\Note Paragraphs beginning with a
+
+  \midaligned{\reuseMPgraphic{note}}
+
+in the margin cover advanced topics and require a heightened level of
+concentration to be fully understood.  You may even find that glancing over
+them on the first reading works to your benefit, as their contents is not
+always required reading.  Of course, the question is if you should have read
+this paragraph in the first place, seeing as there is an admonition in the left
+margin of this paragraph.  If you had not, you would not have known that you
+should not have, so you should have, after all\dots
+
+
+\subject{Notes on the Form of this Manuscript}
+
+I admit it: I {\em love} footnotes.  I guess I’ve read a couple of Terry
+Pratchett books too many; as \Name{Eric S.}{Raymond} points out in
+\cite[Raymond03], “[Pratchett’s] use of footnotes is quite\dots inspiring”.
+Therefore, you will see the odd footnote on seemingly irrelevant topics.  I beg
+you to at least give them a glance, as they are meant to provide some sort of
+entertainment along the way.
+
+Many of the rules that have governed the contents and form of this manuscript
+are due to the influence of \PublicationTitle{The Chicago Manual of Style}
+\cite[Chicago03]\ and \PublicationTitle{The Elements of Style} \cite[Strunk99].
+These are truly wonderful guides in the jungle that is writing and typesetting.
+
+Other influences on the writing of this manuscript were due to
+\Name{Donald}{Knuth}’s \PublicationTitle{Mathematical Writing} \cite[Knuth89],
+\Name{Bill}{Walsh}'s \PublicationTitle{Lapsing Into a Comma} \cite[Walsh00],
+and \PublicationTitle{Effective Writing} by \Name{Bruce}{Ross-Larson}
+\cite[RossLarson99].
+
+
+\subject{Notes on the Typesetting of this Manuscript}
+
+This manuscript was typeset using the \ConTeXt\ macro package \cite[Hagen01]\ 
+for \TeX\ \cite[Knuth86]\ using the \PDFTEX\ engine \cite[Thanh00,Thanh05].
+\ConTeXt\ was written by \Name{Hans}{Hagen} et al. and is distributed by
+\cap{pragma} Advanced Document Engineering (\PRAGMA), \TeX\ by
+\Name{Donald E.}{Knuth}, and \PDFTEX\ by \THANH.  Additional macros were
+provided by \Name{Taco}{Hoekwater} (the \BIBTEX\ bibliography module for
+\ConTeXt), \Name{Giuseppe}{Bilotta}|/|\Name{Michal}{Marvan} (the natural math
+module \Nath), and the author himself.
+
+Figures were rendered using \METAPOST\ \cite[Hobby92]\ and \METAFUN\
+\cite[Hagen02], the graphic extensions to the typeface renderer \METAFONT\ by
+\Name{Donald E.}{Knuth} \cite[Knuth86b], written by \Name{John D.}{Hobby} and
+\Name{Hans}{Hagen}, respectively.  Additional macros for rendering finite
+automata and trees were written by the author himself.
+
+This manuscript has been typeset in the Computer Modern typeface family, also
+due to \Name{Donald E.}{Knuth} \cite[Knuth86c].
+
+The cover displays one of the longest|<|if not {\em the} longest|>|regular
+expressions ever created.  It can be used to validate email addresses that
+conform to the definition found in \RFC\ 822 \cite[RFC822]\ and is almost 6500
+symbols long.
+
+\stopcomponent

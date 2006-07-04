@@ -1,0 +1,868 @@
+\startcomponent thesis/chapters/construction
+
+\project masters-project
+\product thesis
+
+\chapter
+  [construction]
+  {Constructing and Executing Finite Automata}
+
+
+The previous couple of chapters have discussed a range of subjects relating to
+the theory necessary to understand finite automata and its applications.  In
+{\em this} chapter we’ll finally learn how to construct and execute them.
+We’ll be dealing with the two nondeterministic|<|tagged or not|>|variants that
+we’ve previously discussed.  The way we create them are similar, but the tagged
+ones require additional rules to deal with tagged transitions and are thus
+somewhat more complicated to create.  We’ll also look at how we can simulate
+the execution of an automaton, once it’s been created.  Here, the way we handle
+tagged automata is radically different from how we handle the untagged
+variant.  The reason for this is that we must make sure that the tags will be
+updated correctly, and this turns out to not be a simple task.  We’ll see,
+though, that it can be done efficiently and the final procedure isn’t much
+slower than that of the untagged case.
+
+We begin by introducing a method for creating an \NFA\ from regular expression
+known as “Thompson’s Construction”.  This is the classic way of doing the
+conversion and most other methods are variations of the same scheme.  The idea
+behind it is simple and easy to understand, which lends a certain beauty to it.
+Next, we show how an automaton created by this method can be simulated to work
+as a recognizer.  This too is a simple algorithm and is easy to understand and
+implement.  Then, before we can begin to reason about a method for doing the
+same for a \TNFA, we must introduce some more theory about tags and tagged
+finite automata.  This isn’t easy reading, but it may be worthwile to at least
+read through it and then look at the application of it.  This may give some
+added clarity, and may warrant a second reading, which should hopefully ease
+understanding.  Once we’ve discussed the theory, we look at how to construct
+and execute {\TNFA}s and the asymptotical behavior of these methods.
+
+% TODO: discuss the automaton<->regex relation
+
+\section
+  [thompson construction]
+  {Thompson's Construction}
+
+Thompson’s construction of finite automata is due to \Name{Ken}{Thompson} and
+was first introduced in his seminal paper \PublicationTitle{Regular Expression
+Search Algorithm} \cite[Thompson68].  Thompson wanted to be able to use regular
+expressions for the search function of a text editor he was working on at the
+time (\Qed) and came up with a method that created small automata that were
+compiled to machine language and would thus run very fast as well.  His method
+of construction is actually rather simple and can best be described with a
+couple of transition diagrams that show how every regular expression can be
+turned into an equivalent automaton.
+
+\subsection{Atoms}
+
+For the atoms|<|$ε$ and all symbols~$a$ in the input alphabet~$Σ$|>|we
+construct an automaton like those in \infigure[figure:thompson atoms](a) and
+(b).  States~$i$ and $f$ are new initial and final states.
+
+\placefigure
+  []
+  [figure:thompson atoms]
+  {Constructing finite automata from atoms.}
+  {\startcombination[2*1]
+     {\externalfigure[construction:thompson atoms-epsilon]} {(a)}
+     {\externalfigure[construction:thompson atoms-symbol]} {(b)}
+   \stopcombination}
+
+\subsection{Alternation}
+
+Let $A_{r_1}$ and $A_{r_2}$ be {\NFA}s representing regular expressions~$r_1$
+and $r_2$.  For the regular expression $r = (r_1 \Alt r_2)$, we construct the
+\NFA\ in \infigure[figure:thompson alternation], where $i$ and $f$ are new
+initial and final states.  We add ε-transitions from $i$ to the initial states
+of $A_{r_1}$ and $A_{r_2}$, which are then stripped of their rank as initial
+states.  We also add ε-transitions from the final states of $A_{r_1}$ and
+$A_{r_2}$, which are likewise stripped of their rand as final states, to $f$,
+the new final state.
+
+\placefigure
+  []
+  [figure:thompson alternation]
+  {Constructing the alternation of two finite automata.}
+  {\externalfigure[construction:thompson alternation]}
+
+\subsection{Concatenation}
+
+Suppose that $A_{r_1}$ and $A_{r_2}$ are \NFAs\ representing $r_1$ and $r_2$.
+For the regular expression $r = r_1r_2$, we construct the \NFA\ in
+\infigure[figure:thompson concatenation].  The initial state of $A_{r_1}$
+becomes the initial state of the new \NFA\ and the final state of $A_{r_2}$
+becomes the final state.  The final state of $A_{r_1}$ is merged with the
+initial state of $A_{r_2}$; all transitions from the initial state of $A_{r_2}$
+become transitions from the final state of $A_{r_2}$ and the merged state is
+neither an initial nor an final state.
+
+\placefigure
+  []
+  [figure:thompson concatenation]
+  {Constructing the concatenation of two finite automata.}
+  {\externalfigure[construction:thompson concatenation]}
+
+\subsection{Closure}
+
+Suppose that $A_{r_1}$ is an \NFA\ representing $r_1$.  For the regular
+expression $r = {r_1}^∗$, we construct the \NFA\ in \infigure[figure:thompson
+closure], where $i$ is a new initial state, and $f$ is a new final state.  We
+add ε-transitions from $i$ to the initial state of $A_{r_1}$, which isn't
+considered an initial state any more.  We also add ε-transitions from the final
+state of $A_{r_1}$, which is no longer considered an final state, to $f$.  As
+$A_{r_1}$ should be able to run any number of times for the closure, we add an
+ε-transition from the final to the initial state of $A_{r_1}$.  Finally, we add
+an ε-transition from the initial state to the final state, bypassing $A_{r_1}$
+altogether, allowing the constructed \NFA\ to match the empty string which is
+part of $r$.
+
+\placefigure
+  []
+  [figure:thompson closure]
+  {Constructing the closure a finite automaton.}
+  {\externalfigure[construction:thompson closure]}
+
+Let’s now run our trusted regular expression for matching binary strings with
+repeated zeros through Thompson's construction and see what happens.
+
+\startexample
+  Our regular expression $(01^∗0\Alt1)^∗$ is to be turned into an \NFA\ using
+  Thompson's construction described in the previous sections.  To do so, we
+  first construct an abstract syntax tree (\AST) of the regular expression,
+  \infigure[figure:thompson example ast].
+  
+  \placefigure
+    []
+    [figure:thompson example ast]
+    {Abstract Syntax Tree of the regular expression $(01^∗0\Alt1)^∗$.}
+    {\externalfigure[construction:thompson example ast]}
+
+  Given this \AST, we traverse it post||order, which means that we construct
+  the children first, left to right, and then the parent.  Thus, we begin by
+  creating an automaton for the leftmost $0$ leaf,
+  $($\formula[boldmath]{0}$1^∗0\Alt1)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 0-1]}
+
+  Once we’ve created the left child of the concatenation relation, we need to
+  create the right.  We delve deeper and find that we must now construct an
+  automaton for the leftmost $1$, $(0$\formula[boldmath]{1}$^∗0\Alt1)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 1-1]}
+
+  We then create an automaton for its closure,
+  $(0$\formula[boldmath]{1^∗}$0\Alt1)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 1*]}
+
+  The closure should be concatenated with a $0$,
+  $(01^∗$\formula[boldmath]{0}$\Alt1)^∗$,  so we create it next:
+
+    \midaligned{\externalfigure[construction:thompson example 0-2]}
+
+  This allows us to finally concatenate the two,
+  $(0$\formula[boldmath]{1^∗0}$\Alt1)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 1*0]}
+
+  and to concatenate the result with the first $0$,
+  $($\formula[boldmath]{01^∗0}$\Alt1)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 01*0]}
+
+  Now we need to create the right child of the alternation,
+  $(01^∗0\Alt$\formula[boldmath]{1}$)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 1-2]}
+
+  so that we may construct the alternation,
+  $($\formula[boldmath]{01^∗0\Alt1}$)^∗$:
+
+    \midaligned{\externalfigure[construction:thompson example 01*0or1]}
+
+  the final stage is to construct the closure of it all,
+  \formula[boldmath]{(01^∗0\Alt1)^∗}:
+
+    \midaligned{\externalfigure[construction:thompson example (01*0or1)*]}
+
+  Renumbering the states---which does not change anything other than making it
+  a bit more pleasant to look at---gives us the automaton in
+  \infigure[figure:thompson example].  This automaton is much more complex than
+  that in \infigure[definitions:figure:even zeros dfa].  However, this is only
+  to be expected, as we created the simpler one using intuition and actual
+  human thought, whereas the construction used to render the complex one was a
+  fully automated procedure designed to be carried out by a computer.
+
+  \placefigure
+    [][figure:thompson example]
+    {The \NFA\ created by Thompson’s construction for the regular expression
+     $(01^∗0\Alt1)^∗$.}
+    {\externalfigure[construction:thompson example]}
+\stopexample
+
+
+\section{Properties of Thompson’s Construction}
+
+An \NFA\ $A$ created from a regular expression $r$ using Thompson’s
+construction exhibits the following lovely properties:
+
+\startitemize
+  \item $A$ has at most twice as many states as the length of $r$, since each
+  step of the construction adds at most two new states
+  \item $A$ has exactly one initial and one final state, and the final
+  state has no outgoing transitions
+  \item Each state has either one outgoing transition labeled by a symbol, or
+  at most two outgoing ε||transitions
+\stopitemize
+
+Together, these properties make the implementation of Thompson’s construction
+simple, straightforward, and clean.  They also guarantee a pleasant asymptotic
+behavior, which allows us to say how much memory an automaton will require
+and how much time it will require to accept or reject input.  The
+pattern||matching problem, outlined in \infigure[patterns:figure:pattern
+matching model], using Thompson’s construction as the patter matcher generator
+and the resulting automaton as our pattern matcher $M$, can be solved using
+$\Ordo{|r|}$ space and $\Ordo{|s||A|}$ time; the next section shows us how.
+
+
+\section{Executing a Thompson \NFA}
+
+Now that we’re about to begin writing down some algorithms, we need to define
+two notations taken from \cite[Knuth97a]:
+
+\notation{$Q ⇐ x$} Push.  Push element $x$ onto queue or stack $Q$.  If $Q$ is
+  a queue, append $x$ to the end of $Q$.  If $Q$ is a stack, push $x$ onto the
+  top of $Q$.
+
+\notation{$x ⇐ Q$} Pop.  Pop element $x$ off of non||empty queue or stack $Q$.
+  If $Q$ is a queue, set $x$ to the first element of $Q$ and then remove it.
+  If $Q$ is a stack, set $x$ to the topmost element of $Q$ and then remove it.
+
+A queue applies a first||in||first||out policy to a sequential list.  That is,
+the first element put into the queue will be the first one to be removed from
+it.  Think of a queue to the checkout in a shopping market.
+
+A stack applies a last||in||first||out policy to a sequential list.  That is,
+the last element put onto the stack will be the first one to be removed from
+it.  Think of a plate||dispenser, where plates are taken from the top and the
+ones beneath move upward by a spring mechanism.
+
+Before we get to writing an algorithm that simulates the execution of a
+Thompson \NFA, we need an auxiliary algorithm.  This algorithm will calculate
+the \DefineTerm{ε||closure} of a set of states.  The ε||closure of a set of
+states is defined as the set of states reachable from this state by only taking
+ε||transitions to get there.  The ε||closure is thus the complete set of states
+that an \NFA\ will be in at any given configuration.
+\inalgorithm[algorithm:thompson epsilon-closure] lists an algorithm that
+performs this calculation for us.
+
+\placealgorithm
+  []
+  [algorithm:thompson epsilon-closure]
+  {Calculating the ε||closure of a set of states in a Thompson \NFA.}
+  {\startalgorithmio
+     \sym{Input:} A set $I \subseteq S$ of states.
+     \sym{Output:} A set $R$ of states reachable from $I$ by recursively taking
+     ε||transitions leaving states among this set of states.
+   \stopalgorithmio
+\startPSEUDO
+$R ← Q ← I$
+while $Q ≠ ∅$ do
+  $s_1 ⇐ Q$
+  for each $s_2 ∈ δ(s_1, ε)$ do
+    if $s_2 ∉ R$ then
+      $R ⇐ s_2$
+      $Q ⇐ s_2$
+return $R$
+\stopPSEUDO
+}
+
+Given an \NFA\ created by the method described in
+\insection[thompson construction], we can simulate its execution by applying
+\inalgorithm[algorithm:thompson execution] to it.  Thanks to the property of
+only having at most two edges leaving a given state, we can show that
+\inalgorithm[algorithm:thompson execution] runs in $\Ordo{|s||A|}$ steps.
+
+\placealgorithm
+  []
+  [algorithm:thompson execution]
+  {Simulating the execution of a Thompson \NFA.}
+  {\startalgorithmio
+     \sym{Input:} An \NFA\ $A = (S, Σ, δ, s_0, F)$ and a string
+       $w = a_1 a_2 \dots a_n$ from the language $Σ^∗$.
+     \sym{Output:} “yes” if string is accepted, “no” otherwise.
+   \stopalgorithmio
+\startPSEUDO
+$R ← \Feclosure(\{s_0\})$
+for $i ← 0$ to $n$ do
+  $R_{`next} ← ∅$
+  while $R ≠ ∅$ do
+    $s_1 ⇐ R$
+    for each $s_2 ∈ δ(s_1, a_i)$ do
+      $R_{`next} ⇐ s_2$
+  $R_{`next} ← \Feclosure(R_{`next})$
+  $R ↔ R_{`next}$
+if $R ∩ F ≠ ∅$ then
+  return "“yes”"
+else
+  return "“no”"
+\stopPSEUDO
+}
+
+
+\section{Tag||wise Unambiguous Configurations of {\TNFA}s}
+
+Before we can describe how to construct a \TNFA\ fromaa regular expression and
+give an algorithm that simulates a \TNFA, we introduce a new binary relation on
+configurations of {\TNFA}s, namely $\UnYields$, which uses the total ordering
+$≺$ to choose a unique tag||value function among all that may appear in an
+accepting configuration of the \TNFA.  Before we define the meaning of
+the $\UnYields$ relation, we really should define the meaning of the term
+“total ordering” (and thus $≺$).
+
+\startdefinition
+  A \DefineTerm{total ordering}, denoted $≺$, of a set $S$ is a relation between
+  the elements of $S$ that satisfies the following properties for any distinct
+  $x$,~$y$, and $z$ in $S$:
+
+  \startenumerate
+    \item If $x ≺ y$ and $y ≺ z$, then $x ≺ z$. (Transitivity.)
+    \item If $x ≺ y$, then $y ⊀ z$. (Antisymmetry.)
+    \item If $x ≺ y$, then $y ⊀ z$. (Irreflexivity.)
+    \item For any two elements $x$, $y$ in $S$, either $x ≺ y$ or $y ≺ x$.
+      (Comparability.)
+  \stopenumerate
+\stopdefinition
+
+Now that we know what a total ordering is, we can define $\UnYields$.
+
+\startdefinition[tag-wise unambiguous yield]
+A configuration $⟨s, p, u, v⟩$ {\em yields tag||wise
+unambiguously} in one step a configuration $⟨s', p', u', v'⟩$,
+if and only if for any configuration $c$ for which
+$⟨s_0, ε, pu, v_0⟩ \RTCUnYields c$ and
+$c \UnYields ⟨s', p', u', v''⟩$ it holds that either $v' = v''$ or
+$v' ≺ v''$.
+
+We write this as $⟨s, p, u, v⟩ \UnYields ⟨s', p', u', v'⟩$ and
+$\RTCUnYields$ is the reflexive, transitive closure of $\UnYields$.
+
+A string $w$ is said to be {\em tag||wise unambiguously accepted} by a \TNFA,
+if and only if there is a state~$s$ in $F$ and a tag||value function $v$ such
+that $⟨s_0, ε, w, v_0⟩ \RTCUnYields ⟨s, w, ε, v⟩$.
+\stopdefinition
+
+The \UnYields\ relation will allow us to arrive at a unique tag||value function
+when we reach a final state for a class of {\TNFA}s.  This will be useful for
+us in using {\TNFA}s to solve the submatch addressing problem, see
+\inalgorithms[algorithm:unambiguous epsilon-closure]
+\andalgorithm[algorithm:simulating a tnfa].  We need a few more definitions and
+theorems before we can arrive at this result, however.
+
+We begin with an example to see how this new relation works and then move on to
+the new theorems and definitions.
+
+\def\InitConf{\mathematics{⟨s_0, ε, ab, v_0⟩}}
+
+\startexample
+  Using the same automaton that we used in
+  \inexample[definitions:example:simple tnfa] together with the same input
+  string, namely $ab$ and initial configuration \InitConf, we will now perform
+  the same calculations performed in that example, but with the new unambiguous
+  yield relation instead.
+
+  We begin by noting that due to the reflexivity property of $\UnYields$,
+  $\InitConf \UnYields \InitConf$ holds.  Since
+  $\InitConf \Yields ⟨s_1, a, b, v_1⟩$ and
+  $\InitConf \Yields ⟨s_2, a, b, v'_1⟩$, we also have that 
+
+    \[\InitConf \UnYields ⟨s_1, a, b, v_1⟩\]
+
+  and 
+
+    \[\InitConf \UnYields ⟨s_2, a, b, v'_1⟩.\]
+
+  As there’s only one path to states $s_1$ and $s_2$ from $s_0$, $v_1$ and
+  $v'_1$ will be unique, and we won’t have to use $≺$ just yet.
+
+  From the calculations we did in \inexample[definitions:example:simple tnfa]
+  we know that $⟨s_1, a, b, v_1⟩ \Yields ⟨s_3, ab, ε, v_1⟩$ and
+  $⟨s_1, a, b, v'_1⟩ \Yields ⟨s_3, ab, ε, v'_1⟩$.  At this point we will have
+  to rely on $≺$ to choose one of the configurations, as $s_3$ has been reached
+  using two different paths, resulting in two different tag||value functions,
+  $v_1$ and $v'_1$.  If $v_1 ≺ v'_1$, then
+
+    \[⟨s_1, a, b, v_1⟩ \UnYields ⟨s_3, ab, ε, v_1⟩\]
+
+  and
+
+    \[\InitConf \UnYields ⟨s_3, ab, ε, v_1⟩.\]
+
+  It’s also possible that $v'_1 ≺ v_1$, in which case we wind up with
+
+    \[⟨s_1, a, b, v'_1⟩ \Yields ⟨s_3, ab, ε, v'_1⟩\]
+
+  and
+
+    \[\InitConf \UnYields ⟨s_3, ab, ε, v'_1⟩.\]
+
+  In this example it doesn’t matter which one of $v_1$ and $v'_1$ we choose to
+  precede the other.  What matters is that we have been able to identify a
+  unique accepting configuration, and thus also a unique tag||value function.
+\stopexample
+
+We will now state a theorem that validates our claims about the \UnYields\
+relation being able to find us a unique tag||value function.
+
+\starttheorem
+  Let $w = pu$ be a string and $A$ a \TNFA.
+  If $⟨s_0, ε, w, v_0⟩ \RTCUnYields ⟨s, p, u, v⟩$ for some state~$s$ in $S$ and
+  some tag||value function~$v$ in $V$, then $v$ is unique.
+\stoptheorem
+
+\Proof The proof follows trivially from
+\indefinition[tag-wise unambiguous yield].  If $⟨s_0, ε, w, v_0⟩ \RTCUnYields
+⟨s, p, u, v⟩$, then $v$ is the minimum tag||value function found by application
+of $≺$ on the tag||value functions of the otherwise equal configurations
+reached by applying $\Yields$ on some previous configuration reached by
+$\UnYields$.  Therefore, $v$ must be unique, since $≺$ gives a total ordering
+of tag||value functions. \QED
+
+The next theorem states that any string accepted without using $≺$ is also
+accepted when $≺$ is being used to filter out unwanted configurations.
+
+\starttheorem
+  Let $w$ be a string and $A$ a \TNFA.  If $w$ is accepted by $A$, then it’s also
+  tag||wise unambiguously accepted by $A$.
+\stoptheorem
+
+\ProofOutline According to the definition of \UnYields, a configuration $c'$
+can be reached from another configuration $c$ if $c \Yields c'$.  The
+\UnYields\ relation places another restriction on the possible configurations
+that can be reached through \RTCUnYields, in that their tag||value function
+must be the minimal one among the configurations.  This additional restriction
+doesn’t affect what states are reached, i.e., they will be reached by
+\UnYields\ if they are reached by \Yields, it only removes all but one
+configuration that reaches this state: the one with the minimal tag||value
+function. \QED
+
+The \RTCUnYields\ relation allows us to efficiently find the minimum tag||value
+function among a set of accepting configurations.  However, it won’t always
+find the absolute minimum, as calculating every possible accepting
+configuration through use of \RTCYields\ and choosing the minimum among them
+would have.  We’ll now give a set of requirements on the automaton and our
+total ordering that together ensure that \RTCUnYields\ gives us the overall
+minimum tag||value function on reaching an accepting configuration.  
+
+
+\section{Consistent {\TNFA}s}
+
+We begin by defining what it means for a \TNFA\ to be \Term{consistent}.
+A consistent \TNFA\ will give us the same tag||value function when reaching an
+accepting configuration using the \RTCUnYields\ relation as using the
+\RTCYields\ relation would have.  Next, we look at a class of consistent
+{\TNFA}s that can be used to address the submatch addressing problem introduced
+in \insection[patterns:submatch addressing].  We will place restrictions on the
+form of the total orderings we may use, the tags we may use, and how the \TNFA\
+may be constructed.
+
+\startdefinition
+  Let $L$ be the language that’s tag||wise unambiguously accepted by a \TNFA\
+  $A$.  For every string~$w$ in $L$ we have that
+
+    \[\InitConf \RTCUnYields ⟨s, w, ε, v⟩,\]
+
+  for some accepting state $s$ in $F$ and some tag||value function~$v$ in $V$.
+  We say that $A$ is \DefineTerm{consistent} if, for every accepting
+  configuration yielded by \RTCYields\ reaching state~$s$, i.e.,
+
+    \[\InitConf \RTCYields ⟨s, w, ε, v'⟩,\]
+
+  where $v'$ in $V$, we have that $v ≺ v'$ or $v = v'$.
+\stopdefinition
+
+\subsection{Requirements of the {\TNFA}s and their tags.}
+
+\indefinition[definitions:tagged nondeterministic finite automata] allows for
+multiple occurrences of a tag in a single automaton.  We’ll, however, restrict
+ourselves to only allow a tag to occur on a single transition, thus being
+unique for that automaton.
+
+\subsection{Requirements of the tag||value functions.}
+
+Let $v_a$ and $v_b$ be two tag||value functions such that $v_a ≺ v_b$;
+$v_a$ thus precedes $v_b$ in our total ordering.  Now, let’s update $v_a$ and
+$v_b$ by setting a tag~$t_k$ in $T$ to the current position in the input, $i ∈
+\naturalnumbers$.  Furthermore, assume that $i ≥ v_a(t_x)$ and $i ≥ v_b(t_y)$
+for all tags~$t_x$, $t_y$ in $T$.  Updating our two tag||value function, we’ll
+get two new tag||value functions
+
+  \startnathequation
+    v'_a(t) = \cases{ i,      & if $t = t_k$; \cr
+                      v_a(t), & otherwise, }  \\
+  \stopnathequation
+
+  \startnathequation
+    v'_b(t) = \cases{ i,      & if $t = t_k$; \cr
+                      v_b(t), & otherwise. }
+  \stopnathequation
+
+If we are to find the globally minimal tag||value function, then either
+$v'_a ≺ v'_b$ or $v'_a = v'_b$ must hold.  If this isn’t the case,
+i.e., $v'_b ≺ v'_a$, then $v_b$ must have preceded $v_a$.  However, we
+already stated that $v_a ≺ v_b$ and \UnYields\ would have chosen $v_a$ at
+that time.
+
+This means that in a consistent \TNFA, whenever \UnYields\ chooses a tag||value
+function~$v_a$ over another tag||value function~$v_b$, it must be certain that
+it doesn’t encounter a situation where $v_b$ should have been chosen instead of
+$v_a$.
+
+We’ll now restrict our total ordering $≺$ to comply to the following form.  Let
+$v_a$ and $v_b$ be tag||value functions in $V$.  Then, $v_a ≺ v_b$ if and only
+if the there exists a tag~$t_x$ in $T$ such that
+
+  \placeformula[precision made precise]
+    \[(t_x ∈ T_{`min} ∧ 
+       v_a(t_x) < v_b(t_x) ∧
+       ∀ t_y ∈ T, 0 ≤ y < x[v_a(t_y) = v_b(t_y)]) ∨ \\
+      (t_x ∉ T_{`min} ∧ 
+       v_a(t_x) > v_b(t_x) ∧
+       ∀ t_y ∈ T, 0 ≤ y < x[v_a(t_y) = v_b(t_y)]),\]
+
+where $T_{`min}$ is a subset of $T$ containing tags whose values we wish to
+minimize.  Tags in this set are said to be \Term{minimized} and tags in $T
+\setminus T_{`min}$ are said to be \Term{maximized}.
+
+Quite a mouthful. Let’s take it a bit at a time.  What we’re saying is that the
+tag||value function $v_a$ precedes ($≺$) tag||value function $v_b$ {\em if} we
+can find a tag~$t_x$ in $T$ such that the following holds: If the value of
+$t_x$ is to be minimized, i.e., we want it to have an index as early into the
+input as possible, then this value must be smaller in $v_a$ than in $v_b$.
+Analogously, if the value of $t_x$ is to be maximized|<|an index as late into
+the input as possible|>|then this value must be larger in $v_a$ than in $v_b$.
+Also, all tags with indexes smaller than $x$ have the same value in both $v_a$
+and $v_b$.
+
+It’s now time to figure out for what cases the statement “$v_a ≺ v_b$ if and
+only if $v'_a ≺ v'_b$ or $v'_a = v'_b$” will hold.
+
+% TODO: or simply $y < x$
+Due to \informula[precision made precise] we can always find a minimum $x$
+such that all tags~$t_y$, for $0 ≤ y < x$, $v_a(t_y) = v_b(t_y)$ and
+$v_a(t_x) ≠ v_b(t_x)$.  If we update tag $t_k$ in $v_a$ and $v_b$ as before,
+giving us $v'_a$ and $v'_b$, we have three cases to analyze, depending on the
+relationship between $k$ and $x$:
+
+\startenumerate
+  \item If $k < x$, then $v'_a ≺ v'_b$, since $v'_a(t_k) = v'_b(t_k)$ and
+  $v_a(t_k) = v_b(t_k)$.
+
+  \item If $k > x$, then $v'_a ≺ v'_b$, since $x$ is the smallest index for
+    which $v'_a(t_x) ≠ v'_b(t_x)$, and $v'_a(t_x) = v_a(t_x)$ and
+    $v'_b(t_x) = v_b(t_x)$.
+
+  \item If $k = x$, then things will be a lot more complicated.  As we’ve made
+    sure that every tag is unique in the automaton and tag $t_x$ has already
+    been set once, since $v_a(t_x) ≠ v_b(t_x)$, we’re about to update its
+    value.  That means that there must exist a cycle in the automaton including
+    a transition tagged by $t_k$.  As we’re now being forced to equate the
+    value of $t_k$ in the two tag||value functions $v'_a$ and $v'_b$, i.e.,
+    $v'_a(t_k) = v'_b(t_k) = i$, it seems hard to say anything of value about
+    the values of the rest of the tags~$t_r$, for $r > k$, that will now
+    determine the total ordering of $v'_a$ and $v'_b$.
+
+    \infigure[figure:curly tnfa] illustrates this situation, where the
+    arbitrary path $P_2$ along with the transition labeled $ε/t_x$ constitutes
+    a cycle.  The other path, $P_1$, reaches the final state from the target
+    state of the transition labeled $ε/t_x$.  Note that there may be several
+    different paths like $P_1$ and $P_2$.
+
+      \placedescribedfigure
+        []
+        [figure:curly tnfa]
+        {This \TNFA\ contains a cycle along the arbitrary path $P_2$ and the
+         transition labeled $ε/t_x$.  The path $P_1$ is an example of a path
+         that reaches the final state of the \TNFA\ after taking the transition
+         labeled $ε/t_x$.}
+        {\externalfigure[construction:curly tnfa]}
+
+    To solve our predicament, we’ll try to find paths for which the values of
+    $t_r$, for $r > k$, don’t actually matter.  We’ll then make sure that we
+    only create paths that fill these requirements when construction our
+    {\TNFA}s.  Here follows three simple cases where the values of $t_r$,
+    $r > k$, don’t matter:
+
+    \startenumerate[a]
+      \item All $t_r$, $r > k$, occur in all $P_2$.  Then whatever values each
+        $t_r$ have would be overwritten to the same values by \RTCYields, and
+        thus $v'_a = v'_b$.
+
+      \item All $t_r$, $r > k$, occur in all $P_1$.  Then the ordering of
+        $v'_a$ and $v'_b$ doesn’t matter, as all the tags that will decide this
+        will be overwritten by the time a final state is reached anyway.
+
+      \item For any path from the inital state to any of the states on $P_2$ no
+        tag $t_r$, $r > k$ must occur.  In this case, $v'_a = v'_b$, as all
+        tags $t_r$, $r > k$ are unused.
+    \stopenumerate
+\stopenumerate
+
+Any \TNFA\ that complies to the requirements enumerated above will be
+consistent.  We’ll now use this fact to come up with a way to simulate {\TNFA}s
+efficiently.
+
+
+\section{Constructing a \TNFA}
+
+One can construct \TNFAs\ using Thompson’s construction by adding a case for
+tags.  Everything else is dealt with in the same way as described in
+\insection[thompson construction], with the addition that every rule is
+extended to include tags that surround the resulting automaton.  That is, the
+first and last transition in every automaton will be tagged by tags $t_a$ and
+$t_b$, respectively.  Tag~$t_a$ is a member of $T_{`min}$, i.e., it’s
+minimized, while $t_b$ is not, i.e., it’s maximized.  Furthermore, $a$ and $b$
+are smaller than the indexes of any tags that occur in the automaton that they
+surround, and $a ≠ b$.  This allows us to make sure that $≺$ will have
+the form suggested in \informula[precision made precise].
+
+Not every tag added in this manner will be required in the automaton as a
+whole, but this simplification of the construction makes it as general as
+possible.
+
+\subsection{Tags}
+
+For all tags~$t_i$ in $T$, we construct an automaton like that in
+\infigure[figure:tnfa tag].  This automaton recognizes $\{ε\}$ and, as a
+side||effect, sets tag $t_i$ to the current position in the input, making it
+usable for submatch addressing.
+
+\placefigure
+  []
+  [figure:tnfa tag]
+  {Constructing finite automata for tags.}
+  {\externalfigure[construction:tnfa tag]}
+
+
+\section
+  [simulating tnfas]
+  {Simulating the Execution of a \TNFA}
+
+To simulate the execution of a \TNFA\ we compute its \RTCUnYields\ relation.
+The idea is to do a breadth||first search on the possible paths that can be
+taken in the automaton for a prefix of the input.  Since we have defined rules
+for what tag||value functions that are of interest to us when we reach a final
+configuration, we can prune many paths from our search early.  In fact, it’s
+possible to only keep as many paths as there are states in our automaton around
+at any given configuration of the automaton.  This was actually the whole point
+of introducing the \UnYields\ relation in the first place.
+
+Following the step||wise refinement of an algorithm for computing \RTCUnYields\
+given in \cite[Laurikari01], we begin with an algorithm that calculates the
+\DefineTerm{ε||closure} of a set of states in in a \TNFA\ $A = (S, T, ≺, Σ, δ,
+s_0, F)$.
+
+The algorithm for calculating the ε||closure of a set of states in a \TNFA\ is
+outlined in \inalgorithm[algorithm:epsilon-closure].  The idea is to maintain a
+queue|<|or stack, it doesn’t actually matter|>|of states that may be reached by
+only taking ε||transitions from an initial set of states.  The result will then
+be a set of states that are reachable from the initial set of states without
+consuming any input.  The algorithm can be implemented to run in $\Ordo{|S|}$
+time and space, and works just like the algorithm for calculating the
+ε||closure for a set of states in an \NFA, but with handling for the slightly
+different transition function of a \TNFA.
+
+\placealgorithm
+  []
+  [algorithm:epsilon-closure]
+  {Calculating the ε||closure of a set of states.}
+  {\startalgorithmio
+     \sym{Input:} A set $I \subseteq S$ of states.
+     \sym{Output:} A set $R$ of states reachable from $I$ by recursively taking
+       ε||transitions leaving states among this set of states.
+   \stopalgorithmio
+\startPSEUDO
+$R ← Q ← I$
+while $Q ≠ ∅$ do
+  $s_1 ⇐ Q$
+  for each "$s_2$ such that $s_2 ∈ δ(s_1, ε, t)$, for some $t ∈ T$," do
+    if $s_2 ∉ R$ then
+      $R ⇐ s_2$
+      $Q ⇐ s_2$
+return $R$
+\stopPSEUDO
+}
+
+When we’re dealing with a \TNFA\ we must also take into account the tags that
+we may encounter along the paths traveled.
+\inalgorithm[algorithm:tagged epsilon-closure]\ does this by modifying
+\inalgorithm[algorithm:epsilon-closure]\ to instead work on pairs $(s, U)$ of
+states and sets of tags that have been seen along paths reaching a given state
+so far.  Note that there may be several pairs including the same $s$ but with
+differing $U$s.
+
+\placealgorithm
+  []
+  [algorithm:tagged epsilon-closure]
+  {Calculating the tagged ε||closure of a set of states.}
+  {\startalgorithmio
+     \sym{Input:} A set $I \subseteq S$ of states.
+     \sym{Output:} A set $R$ of states and sets of tags reachable from $I$ by
+     recursively taking ε||transitions leaving states among this set of states.
+   \stopalgorithmio
+\startPSEUDO
+for each $s ∈ I$: $Q ⇐ (s,∅)$
+$R ← Q$
+while $Q ≠ ∅$ do
+  $(s_1,U) ⇐ Q$
+  for each "$s_2$ and $t$ such that $s_2 ∈ δ(s_1, ε, t)$" do
+    if $(s_2,U ∪ \{t\}) ∉ R$ then
+      $R ⇐ (s_2,U ∪ \{t\})$
+      $Q ⇐ (s_2,U ∪ \{t\})$
+return $R$
+\stopPSEUDO
+}
+
+The complexity of \inalgorithm[algorithm:tagged epsilon-closure]\ is
+$\Ordo{|S|2^{|T|}}$, as there are $2^{|T|}$ possible subsets of $T$.  The worst
+case behavior can be seen for automata of the form shown in
+\infigure[figure:worst-case tnfa for tagged epsilon-closure].  The problem is
+that from any state $s$ among $\{s_0, s_1, \dots, s_n\}$, any other state can
+be reached by following a path that contains any subset of the set of tags
+$\{t_0, t_1, \dots, t_{n-1}\}$.
+
+\placedescribedfigure
+  []
+  [figure:worst-case tnfa for tagged epsilon-closure]
+  {The worst||case scenario for \inalgorithm[algorithm:tagged epsilon-closure].
+   Any state can be reached by following a path that contains any subset of
+   tags.}
+  {\externalfigure[construction:worst-case tnfa for tagged epsilon-closure]}
+
+We’ll now apply $≺$ to filter out all but one set of tags for each reachable
+state, thus keeping the worst||case space requirement down.  The modified
+algorithm is listed in \inalgorithm[algorithm:tagged minimal epsilon-closure].
+
+\placealgorithm
+  []
+  [algorithm:tagged minimal epsilon-closure]
+  {Calculating the minimal tagged ε||closure of a set of pairs of states and
+   tag||value functions.}
+  {\startalgorithmio
+     \sym{Input:} A set of pairs $(s,v)$ in $W$, where $s$ is a state in $S$
+       and $v$ is a tag||value function in $V$.
+     \sym{Output:} A function $R\colon S → V$ that maps states to tag||value
+       functions.
+   \stopalgorithmio
+\startPSEUDO
+$R ← ∅$
+for each $(s_0,v_0) ∈ W$ do
+  for each $(s,U) ∈ \Ftaggedeclosure(\{s_0\})$ do
+    let $v(x) = \{\,{\rm pos}, \text{if } x ∈ U; v_0(x), \text{otherwise.}\,\}$
+    if $R(s) \text{ is undefined} ∨ v ≺ R(s)$
+      $R(s) ← v$
+return $R$
+\stopPSEUDO
+}
+
+The algorithm uses the ambiguous tagged ε||closure of each item in the set $W$ of
+pairs $(s,v)$, where $s$ is a state in $S$ and $v$ is a tag||value function in
+$V$, and computes the new tag||value functions according to what tags have been
+found.  Function $R$ keeps all the smallest functions as dictated by $≺$.  This
+algorithm requires $\Ordo{|W|C_T|S|2^{|T|}}$ time, where $C_T$ is the time to
+perform a comparison using $≺$, to complete.  \inalgorithm[algorithm:tagged
+minimal epsilon-closure] is actually slower than \inalgorithm[algorithm:tagged
+epsilon-closure].  Our next refinement will improve on this algorithm, however;
+making it fast enough for us to consider using it in a computer.
+
+Assuming that our \TNFA\ $A$ is consistent, we can improve on
+\inalgorithm[algorithm:tagged minimal epsilon-closure] considerably.
+\inalgorithm[algorithm:unambiguous epsilon-closure]\ calculates the
+ε||closure using the rules of the \UnYields\ relation.
+
+\placealgorithm
+  []
+  [algorithm:unambiguous epsilon-closure]
+  {Calculating the \UnYields\ ε||closure of a set of pairs of states and
+   tag||value functions.}
+  {\startalgorithmio
+     \sym{Input:} A set of pairs $(s,v)$ in $W$, where $s$ is a state in $S$
+       and $v$ is a tag||value function in $V$.
+     \sym{Output:} A set of pairs $(s,v)$ reachable from the states in the
+       pairs of $W$.
+   \stopalgorithmio
+\startPSEUDO
+for each $(s,v) ∈ W$ do
+  $Q ⇐ s$
+$R ← ∅$
+for each $s ∈ S$ do
+  $\Fcount(s) ← \Finputorder(s)$
+while $Q ≠ ∅$ do
+  $s_1 ⇐ Q$
+  for each "$s_2$ and $t$ such that $s_2 ∈ δ(s_1, ε, t)$" do
+    let $v(x) = \{\,{\rm pos}, \text{if } x = t ∧ t ≠ ω; v_0(x), \text{otherwise.}\,\}$
+    if $R(s_2) \text{ is undefined} ∨ v_2 ≺ R(s_2)$
+      $R(s_2) ← v_2$
+      $\Fcount(s_2) ← \Fcount(s_2) - 1$
+      if $\Fcount(s_2) = 0$ then
+        $Q \buildrel \rm stack \over \Push s_2$
+        $\Fcount(s_2) ← \Finputorder(s_2)$
+      else
+        $Q \buildrel \rm queue \over \Push s_2$ 
+return $R$
+\stopPSEUDO
+}
+
+The $\Finputorder\colon S → \naturalnumbers$ function gives the number of
+inbound transitions of a state.  Furthermore, $Q$ is treated as a queue
+throughout the algorithm, except for when stated otherwise.
+
+\inalgorithm[algorithm:unambiguous epsilon-closure] has a running time of
+$\Ordo{|S||T|C_T\lg{|T|}}$.  The term $|T|$ is due to the fact that every tag
+may need to be set and $\lg{|T|}$ comes from representing tag||value functions
+with a binary data structure with a logarithmic look||up||function.  $|S|$ and
+$C_T$ come from the fact that all states in $S$ may need to be visited $C_T$
+times.
+
+It’s important to note that \inalgorithm[algorithm:unambiguous epsilon-closure]
+doesn’t solve the same problem as \inalgorithm[algorithm:tagged minimal
+epsilon-closure].  The first computes \RTCUnYields\ over ε||transitions, while
+the second computes the closure of \RTCYields\ over ε||transitions and then
+uses $≺$ to choose a unique tag||value function for each state.  When the
+\TNFA\ is consistent, the result will be the same; in general they won’t be.
+
+Now that we have a way to calculate the \RTCUnYields\ over ε||transitions,
+let’s use it together with some way of handling normal transitions so that we
+can simulate a \TNFA.  \inalgorithm[algorithm:simulating a tnfa]\ lists a
+method by which we can find all ways that a string can be tag||wise
+unambiguously accepted by a \TNFA.
+
+\placealgorithm
+  []
+  [algorithm:simulating a tnfa]
+  {Simulating a tagged nondeterministic finite automaton.}
+  {\startalgorithmio
+     \sym{Input:} A \TNFA\ $A = (S, T, ≺, Σ, δ, s_0, F)$ and a
+       string $w = a_1 a_2 \dots a_n$ from the language $Σ^∗$.
+     \sym{Output:} A set of pairs of final states and tag||value functions
+       reached by the automaton upon consuming the string $s$.
+   \stopalgorithmio
+\startPSEUDO
+$R ← \Funyieldseclosure({(s_0,v_0)})$
+for $i = 0$ to $n$ do
+  $R_{`next} ← ∅$
+  while $R ≠ ∅$ do
+    $(s_1,v) ⇐ R$
+    for each $s_2 ∈ δ(s_1, a_i, ω)$ do
+      $R_{`next} ⇐ (s_2,v)$
+  $R_{`next} ← \Funyieldseclosure(R_{`next})$
+  $R ↔ R_{`next}$
+return $\{\,(s,v) \mid s ∈ F, (s,v) ∈ R\,\}$
+\stopPSEUDO
+}
+
+The algorithms and the rules for how our total ordering should be defined are
+based on those written by \Name{Ville}{Laurikari} and presented by him in
+\cite[Laurikari00,Laurikari01].  These are the only available paper on {\TNFA}s
+currently available, and they contain further details and other uses for tags.
+
+\stopcomponent

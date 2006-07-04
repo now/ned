@@ -1,0 +1,519 @@
+\startcomponent thesis/chapters/implementation-regexes
+
+\project masters-project
+\product thesis
+
+\chapter
+  [implementation - regexes]
+  {An Implementation of {\NRE}s}
+
+
+Now that we’ve defined the syntax of our {\NRE}s, it's time to present an
+implementation of them.  This implementation will later be used in the
+implementation of our text editor, \NED, which is discussed in
+\inchapter[implementation - ned].  
+
+\Note This chapter and the next are quite technical in nature.  They document
+the implementations of a pattern||matching library that parses the regular
+expression syntax (\NRE) introduced in the previous chapter into {\TNFA}s that
+may then be executed on an input source and a text editor that uses these
+regular expressions in its \SAM||inspired command||set.  The text editor,
+dubbed \NED, also uses a library implementing the piece||table buffering
+strategy introduced in
+\insection[text editors - internal:piece table buffering strategy] that uses a
+red||black tree to manage the pieces of the piece table.  While these chapters
+are full of interesting information for anyone thinking of implementing their
+own pattern||matching library or text editor, they’re not for everyone.  During
+the final stages of this manuscript, it was even suggested that they be demoted
+to appendices to not scare off potential readers by the sheer volume of text
+contained within these chapters.  This is a valid point, but instead of moving
+these two chapters to the appendix, it was decided that they’d remain where
+they are, as there’d be a very large gap in this manuscript otherwise.  Anyone
+who isn’t up for a lot of implementation details and reading \CLang\ and Ruby
+code may consider glancing through the first few sections of this chapter and
+then head straight for the final chapter of this manuscript,
+\inchapter[future work]; no hard feelings.  If you {\em are} feeling up for a
+journey through the rather entertaining implementation of a pattern||matching
+library, then by all means, do read on.
+
+\section{Choosing a Course of Implementation}
+
+Before any code is written, one must choose what and, more importantly, how
+it’s to be written.  The “what” is easy in this case.  We want a piece of code,
+preferably put into a library, that can perform the tasks of a
+pattern matcher, as outlined in \inchapter[patterns]:
+
+\startenumerate
+  \item Convert a regular expression expressed in the \NRE\ syntax to a finite
+    automaton
+
+  \item Execute such a finite automaton over a source of input, checking if it
+    is accepted by the finite automaton and providing any submatch addressing
+    data if so
+\stopenumerate
+
+This is a very simple and general interface.  All it defines is two
+responsibilities, the creation and execution of finite automata.  The “how” is
+a lot more complicated.
+
+There are basically three possible ways of going about solving the “how”:
+
+\startenumerate
+  \item Provide a front||end to an existing implementation
+
+  \item Rewrite an existing implementation to be able to handle {\NRE}s
+
+  \item Write an implementation from scratch
+\stopenumerate
+
+We’ll discuss each of these possible implementations separately.
+
+
+\subsection{Writing a front||end to an existing implementation.}
+
+As the regular expressions expressable using the \NRE\
+notation are a subset of those expressable using \ERE, a possible route of
+implementation would be to simply provide a front||end to an existing
+implementation of {\ERE}s.  This front||end would convert regular expressions
+expressed in \NRE\ to ones expressed in \ERE\ and then let the existing
+implementation deal with the \ERE\ appropriately.  Libraries that implement the
+\ERE\ notation are numerous.  Examples include Tom Lord's {\tt rx} library
+\cite[Hackerlab], the \GNU\ regex library \cite[GNUregex], and the \PCRE\
+library \cite[PCRE], all written in the \CLang\ programming language.
+
+Firstly, this implementation is very brittle.  It assumes that the existing
+implementation works well and that it will continue to do so.  Neither of these
+premises usually hold.  Both the \GNU\ regex and \PCRE\ libraries are
+implemented using a backtracking \NFA|<|actually, the \NFA\ is never actually
+constructed, rather it is simulated in \CLang\ code|>|which means that it can
+be hard to predict how much time and memory pattern||matching will require.
+For certain, not necessarily pathological, cases, the time required will be an
+exponential function of the size of the input.
+
+Secondly, although the interface to these libraries is well defined by
+\POSIX|<|and they all do provide these interfaces|>|these interfaces are
+designed to be as generic as possible, making it hard for us to be flexible in
+the way we want to use them.  An example of this is that this interface assumes
+that the input is always a \CLang\ string.  This makes it very easy to use for
+some, perhaps even most, cases, but if there is no easy way to provide the
+whole input as a sequence of bytes, then we are at a loss.  As we’ll see in
+the following chapter, this is the case for our text editor.  Another problem
+is that this interface is only well||defined when the input uses the \ASCII\
+character set.  An interface for \Unicode\ text has yet to be standardized.
+
+Thirdly, it means that we’ll have to depend on this library to be installed
+on the computer system that we wish to use our regular expressions on.  This is
+not a big problem, but it creates a dependency that we would wish wasn't there.
+
+There are some positive attributes to this way of implementation, though.  The
+number on reason for using this method is that most of the work has already
+been done for you.  Furthermore, you may benefit from future development as
+well, as changes are done to the upstream implementation.
+
+The \POSIX\ regular expression interface is listed in
+\insection[posix regex:posix regex.h].
+
+\subsection{Rewrite an existing implementation.}
+
+The possibility to modify an existing implementation to accept regular
+expressions written in our new notation may seem to be a tempting solution.
+The problem with this solution, however, is that the time required to gather
+the understanding necessary to perform such a task is most likely equal or
+greater to that required to write it from scratch.  Lack of good documentation
+and non||agreeing coding standards are examples of things that make it hard to
+modify other people's code.  Also, some of the points discussed in the previous
+subsection are still valid.  You’ll, for example, still depend on the
+asymptotic properties of the implementation of a given library.
+
+\subsection{Write a new implementation.}
+
+Probably the best solution, writing a new implementation gives us the
+flexibility of defining an interface, choosing an implementation language,
+and of choosing the type of finite automaton to convert our regular expressions
+to.  What's more, we don't have to try to understand other people's code, nor
+do we have to try to shoehorn a solution on top of another.
+
+If we decide to write a new implementation, we are free to provide an interface
+that handles the \Unicode\ character set correctly and can deal with multiple
+kinds of input.
+
+The freedom of choosing the type of finite automaton to convert allows us to
+try out the \TNFA, which has previously only been implemented by its inventor.
+This is exciting, as it seems to be a very promising way of dealing with both
+submatch addressing and approximate matching.
+
+The main drawback of this solution is that it may require more time to
+complete.  Other issues include the fact that if we don't provide a
+backward||compatibility interface to our new one, it will not be \POSIX\
+compliant and the possibility of winding up with a solution that doesn't work
+as well as hoped.
+
+In the end, however, the benefits outweigh the drawbacks and this is the
+solution that we’ll choose for our implementation.  This means that we have
+to decide on a finite automaton to use.
+
+
+\section
+  [implementation language]
+  {Choosing an Implementation Language}
+
+Based on the shamelessly biased comparison in the previous section, it’s
+obvious that we’ll want to write our own implementation.  This gives us the
+freedom to choose whatever implementation language we wish.  There are many
+valid choices, \CLang, Objective||\CLang, Lisp, and Ruby being the ones we’ll
+actually consider.
+
+In writing our implementation, a couple of traits of the implementation are of
+particular interest.  As finite automata do a lot of work in processing their
+input, following transitions, keeping track of matches, and so on, we require
+them to run quickly.  Thus, the implementation language has to be rather speedy
+as well, as an automaton can only be as fast as the code that simulates it.
+Finite automata can also become quite large, with a lot of states and
+transitions, implying that our implementation language has to be able to create
+memory||efficient code.  Furthermore, finite automata can be viewed as
+machines simulated by a computer.  Machines usually consist of many different
+parts, or objects, and so in simulating one we would also like to be able to
+simulate these parts.  Hence, we would like to be able to write
+object||oriented code in our implementation language.
+
+Let's summarize the requirements outlined in the previous paragraph.  Our
+implementation language
+
+\startitemize
+  \item Has to be able to run quickly
+
+  \item Should require as little computer memory as possible
+
+  \item Should provide means of object orientation
+\stopitemize
+
+With these requirements in mind, we’ll now discuss the four languages
+mentioned above and make an informed decision of what language to use for our
+implementation.
+
+
+\subsection{\CLang: the most successful and widely deployed language ever.}
+
+\CLang\ \cite[KernighanRitchie88]\ is a very simple language, low||level
+language.  It's procedural in nature and includes but the most basic of
+imperative constructs and has no built||in support for object||orientation.
+Let's list some of its positive and negative traits:
+
+\startpropertylist
+  \sym{$+$} Portability: \CLang\ is ubiquitous.
+
+  \sym{$+$} Speed: \CLang\ is easy to translate into effective machine code and
+    is also easy for a compiler to optimize, as it is such a simple language.
+
+  \sym{$+$} Size: \CLang\ generates, due to the same reasons that it is fast,
+    short machine code and, as data structures in \CLang\ map directly to their
+    actual layout in memory, is memory||space efficient.
+
+  \sym{$-$} Object||orientation: Writing object-oriented code in \CLang\ is
+    complicated at best.
+
+  \sym{$-$} Low||level: As \CLang\ is a very low||level language and, with its
+    weak typing and its direct memory access model, it is very easy to shoot
+    yourself in the foot when using it.
+\stoppropertylist
+
+\subsection{Objective||C: object orientation on top of \CLang.}
+
+Objective||\CLang\ \cite[Cox91]\ is an extension of \CLang\ that adds
+object||oriented constructs to the language. It sits right on top of \CLang,
+maintaining perfect backwards compatibility, where \CPP\ \cite[Stroustrup02]\
+extends and breaks the \CLang\ language.  That is, any piece of \CLang\ code is
+also valid Objective||\CLang\ code.  The same doesn't hold for the
+\CLang|/|\CPP-pair.
+
+Objective||\CLang\ hasn't seen much mainstream use until recently, when Apple
+decided to base their next generation operating system's\footnote{Mac OS X}
+application programming interface and user interface libraries, called Cocoa,
+on the \OPENSTEP\ toolkit \cite[OPENSTEP], which was written for the \NeXTSTEP\
+operating system \cite[NeXTSTEP]\ using the Objective||\CLang\ language.  Cocoa
+has seen great acceptance among programmers and seems to be here to stay.
+
+\startpropertylist
+  \sym{$+$} Portability: Objective||\CLang\ comes close to being as universally
+    deployed as \CLang, mainly due to the fact that \GCC\ (\GNU\ \CLang\
+    Compiler) supports it \cite[GCC].
+
+  \sym{$+$} Speed: Objective||\CLang\ runs at about 1.5 times the speed of
+    \CLang\ when dealing with object||oriented constructs such as message
+    passing, and at the same speed for everything else.
+
+  \sym{$+$} Size: Objective||\CLang\ is space||efficient for the same reasons
+    that \CLang\ is.  The object||oriented constructs are efficient in this
+    area as well, and even though there is a small penalty for using objects,
+    the ends justify the means.
+
+  \sym{$+$} Object||orientation: Objective||\CLang’s object||oriented
+    constructs are inspired by the ones found in Smalltalk \cite[Smalltalk], a
+    prominent object||oriented language\footnote{Smalltalk\ is prominent in the
+    sense of being highly regarded among researchers, not in the sense of
+    seeing a lot of use in practice.}, and are simple yet powerful.
+
+  \sym{$-$} No standard library: Although Cocoa has become a standard library
+    on Mac OS X, there is no standard library associated with the language as
+    such.  This means that we would have to implement a whole lot of classes to
+    be able to do any real work.
+
+  \sym{$-$} Not mature: Even though the language itself is mature,
+    implementations of it, including that found in \GCC\ aren’t.  It may be
+    undesirable to trust an implementation that is under development.
+\stoppropertylist
+
+\subsection{Lisp: an old contender that still has spunk.}
+
+Lisp \cite[McCarthy60,Graham93,Graham02b]\ is one of the oldest programming
+languages that's still in use.  Lisp was invented in the late 1950s by a
+mathematician named \Name{John}{McCarthy}, to be used as a convenient way to
+express mathematical properties of computers.  Then, in the early 1960s, one of
+his graduate students, \Name{Steve}{Russel}, wrote an implementation of the
+Lisp language that ran on an actual computer, and the rest is a long and
+tangled history of popularity and unpopularity, love and hate.  Lisp is again
+gaining some momentum among programmers, after a slow two centuries during the
+1980s and 1990s, where it was generally dismissed as a non||option, due to its
+association with artificial intelligence.
+
+The scientific field of artificial intelligence had made many promises about
+the future of computing and life in general and Lisp was the programming
+language of choice for anyone working in the field.  Artificial intelligence,
+however, failed to deliver and people were so upset by the complete and total
+washout that anything associated with it stirred up emotions that would best be
+left unstirred.
+
+Lisp wasn’t designed for working with artificial intelligence and works well
+for almost any programming task, so there's nothing stopping us from using it
+for our one.  Lisp’s main dialect is known as Common Lisp and has been
+standardized by \ANSI\ \cite[CommonLispANSI].  One implementation, of Common
+Lisp, known as \SBCL\footnote{\from[SBCL]}, is of particular interest to us, as
+it available to us more or less for free.  The summary that follows is based on
+the \SBCL\ implementation of Common Lisp.
+
+\startpropertylist
+  \sym{$+$} Object||orientation: Common Lisp defines a very powerful set of
+    object||oriented constructs.
+
+  \sym{$+$} Standard library: Common Lisp comes with a huge standard library.
+    So huge, in fact, that many dismiss Common Lisp for this sole reason,
+    reasoning that the language itself is too complex to ever be learned.
+
+  \sym{$+$} Mature: Common Lisp is mature, and \SBCL\ is a mature
+    implementation of it.
+  
+  \sym{$+$} High||level: Common Lisp is a very high||level language that hides
+    most of the details of the computer and focuses on the more important
+    details that make the programmers life that much easier, such as taking
+    care of allocated memory (garbage collection) and providing high||level
+    abstractions such as closures, continuations, and functions.
+
+  \sym{$\pm$} Portability: Although the language specification of Common Lisp
+    is written to be highly portable, it can still be hard to find an
+    implementation that runs on the more obscure of systems.  Implementations
+    also differ in what parts of the specification they support and the
+    extensions to the language that they implement.
+
+  \sym{$\pm$} Speed: Code written in Lisp can be executed with great speed.  It
+    can also bog down to a stall.  It all depends on how well the code is
+    written.  This is true in most, if not all, languages, but it seems to make
+    a bigger difference in Lisp than in most other languages.  Lisp is a very
+    simple language, yet it is hard to master, in much the same way that chess
+    and go are simple games, yet take a lifetime to dominate.
+
+  \sym{$-$} Size: Depending on how you do your calculations, Common Lisp can be
+    quite the memory hog\footnote{“Favored term to describe programs or
+    hardware that seem to eat far more than their share of a system's
+    resources, especially those which noticeably degrade interactive response.”
+    (From The Free On-line Dictionary of Computing)}.  It can be very hard to
+    make meaningful estimates, however, especially due to the way that \SBCL\
+    handles memory.
+\stoppropertylist
+
+\subsection{Ruby: our youngest challenger, all the way from Japan.}
+
+Our final language of the four discussed, Ruby \cite[Thomas04,Ruby]\ is a
+highly object||oriented language that brings a lot of ideas from other
+programming languages into one sophisticated, yet stunningly simple language.
+Languages that have been named as sources of inspiration to Ruby's creator,
+\Name{Yukihiro}{Matsumoto}, or “Matz”, include Smalltalk, Java \cite[Java],
+Perl, Python \cite[Python], Lisp, CLU \cite[CLU], and Ada \cite[Ada].
+
+% TODO: flesh out a bit more.
+
+\startpropertylist
+  \sym{$+$} Portability: Ruby has been ported to a large range of platforms.
+    Ruby doesn't, however, pretend that all platforms are created equal and
+    most of its standard library is designed around that delivered with \CLang.
+
+  \sym{$+$} Standard library: Ruby comes with an extensive standard library
+    that provides a lot of useful modules.  There is also a centralized
+    repository for third||party libraries available\footnote{The
+    \DefineTerm{Ruby Application Archive} (\RAA) is available at \from[RAA]}.
+
+  \sym{$+$} Object||orientation: Ruby is by far the most object||oriented
+    of the four languages.  One of the design||philosophies of Ruby was that
+    everything was to be an object: basic types such as integers and strings,
+    classes and modules, functions, and so on.  This makes many advanced
+    programming techniques, such as meta||programming, easy to apply to Ruby.
+  
+  \sym{$+$} High||level: Ruby is a high||level language, for much the same
+    reasons that Common Lisp is.
+
+  \sym{$+$} Extensible: Ruby is easy to extend with code written in other
+    programming languages.  Ruby provides a simple interface to the interpreter
+    that allows programmers to write \CLang\ routines that are then wrapped
+    inside a Ruby module and|/|or class that can in turn be used in Ruby code.
+    A common use for this is to provide bridges between existing code written
+    in, for example, \CLang\ to Ruby, thus providing means for using it in Ruby
+    code.
+
+  \sym{$-$} Speed: Ruby is currently implemented as a fully interpreted
+    language, where a parse||tree is generated from the source code and this
+    tree is walked and interepreted as appropriate.  This leads to slow
+    execution in many cases and this is perhaps the biggest flaw of Ruby.  Work
+    is currently being done to remedy this situtation, however, and a
+    full||fledged byte||code compiler is estimated to replace the current
+    interpreter by the end of 2005.  A often used solution to the speed||issue
+    is to rewrite time||intensive code in \CLang\ and then interfacing it to
+    Ruby as described in the previous point.  This tends to work well in most
+    cases.
+
+  \sym{$-$} Size: Due to its highly dynamic nature, objects in Ruby can require
+    a lot of memory.  The current implementation hasn't been optimized for size
+    very well, however, so there is room for improvement in this area as well.
+
+  \sym{$-$} Not mature: Ruby is a young language and is still changing a lot.
+    A lot of work is currently being done on the 2.0 specification of Ruby.
+\stoppropertylist
+
+\subsection{Making an informed decision.}
+
+Now that we have “all” the facts, let's decide what language to choose for our
+implementation.
+
+While good languages, Objective||\CLang\ and Common Lisp are not optimal for
+our needs.  Objective||\CLang\ doesn't offer a standard library and without one
+there would simply be too much work involved in writing a decent one to base
+our implementation upon.  The reason for not choosing Common Lisp is that we
+don't want to rely too heavily on one particular implementation.  Also, there's
+the question of memory requirements that needs an answer.  We’ll not attempt
+at providing one.
+
+Instead, what we’ll do is use \CLang\ as our implementation language.  This
+allows us to use it from Ruby through extension, which is good as we’ll be
+using Ruby for implementing our text editor later on, see
+\inchapter[implementation - ned].  Actually, what we’ll do is write a Ruby
+extension in \CLang, so that we can immediately put it to good use in our text
+editor.  The reasons for choosing \CLang\ is thus that it works well with Ruby
+and that it is efficient, both in space and time, which makes it ideal for the
+time||consuming task of matching patterns.
+
+% TODO: This subsection isn't great, but it will do for the time being.
+
+
+\section{Choosing a Finite Automaton}
+
+We have discussed three kinds of finite automata so far in this manuscript,
+namely the deterministic, the non||deterministic, and the tagged
+non||deterministic.  Each has its own set of benefits and drawbacks and may be
+implemented in a number of ways.  Non||deterministic finite automata are by
+far the easiest to create and simulate, and Thompson's Construction
+\insection[construction:thompson construction]\ being by far the most popular
+choice of algorithm.  Tagged non||deterministic finite automata can be
+created by extending any method of constructing untagged ones, by adding rules
+that add tags to transitions as appropriate.  Deterministic finite automata
+are generally created from a regular expression by way of a non||deterministic
+one.  The procedure of determining a finite automaton is simple and
+straightforward in theory, but require extra time and space in practice.  It
+can even result in exponentially large automata, which is a trait we would wish
+to avoid.  There are ways of working around this problem, but we won't look
+into it any further.  Instead, we'll limit ourselves to implement the two
+non||deterministic variants.
+
+There are many ways of implementing {\NFA}s and the following sections will
+cover a few of them in some detail.  First, though, we’ll describe a method
+of turning {\NRE}s into a representation that is easier to automatize.
+
+
+\section{Introducing the Implementation}
+
+It’s time to go through the implementation of our pattern||matching library.
+The rest of this chapter|<|and most of the next one|>|will consist of the
+actual source code of the library intermingled with commentary on the code
+itself.  The comments are meant to guide the reader through the implementation
+and the design decisions that have been made.  The commentary is light||hearted
+and the code has been factored in such a way that it should be easy to follow.
+A big problem is that much of the code has to be written in reverse, as \CLang\
+requires all symbols to be well||defined before use.  That is, we must
+introduce functions and code before it’s actual use.  This can be confusing at
+times, but the comments should provide sufficient aid through the path of the
+code.  It may be necessary to make jumps both forward and backward through the
+code to understand the interconnections between the different functions and
+subsystems.
+
+The source||code and comments have been extracted from the actual source files
+themselves, using a tool designed by the author.  The idea behind the tool was
+inspired by the literate programming “paradigm” deviced by Donald~E. Knuth for
+documenting the source of his \TeX\ and \METAFONT\ programs.  For an
+introduction to literate programming, see \cite[Knuth92].
+
+There is a large difference between Knuth’s tool for applying literate
+programming to \CLang, \CWEB\ \cite[Knuth94], and the one used here, \ECSC\
+(\abbreviationmeaning{ECSC}).  In \CWEB, there is only one source file that
+consists of blocks of source code and documentation that are pieced together by
+one of two commands, \CTANGLE\ or \CWEAVE, to generate a \CLang\ or \TeX\
+source file.  The source code blocks are included in the documentation and is
+processed by \CWEAVE\ to pretty||print it before inclusion.  In \ECSC, however,
+there may be many source files and all are written in the native programming
+language.  Assuming that this language provides a way for the programmer to
+embedd comments into the source files, the programmer may then place blocks of
+commentary to the code, written in \ConTeXt\ source code.  \ECSC\ then extracts
+the comments and the code and writes it to a \ConTeXt\ source file.  The source
+language blocks are contained in a separate \ConTeXt\ environment that parses
+their contents for pretty||printing.
+
+The \ECSC\ is less intrusive on the actual source code of the program, so it’s
+conceptually simpler than \CWEB.  The main problem is that it’s harder to break
+up the code into shunks than in \CWEB, as the source code without the comments
+has to work as is.  This also means that the documentation in a sense isn’t as
+important in \ECSC\ as in \CWEB.  There are benefits and drawbacks to this
+approach.  The benefit is that it makes it easier to retrofit documentation
+onto the source code.  The drawback is that the documentation may never get
+written.
+
+Anyway, enough with discussing non||essentials; let’s begin coding!
+
+\component thesis/sources/patternmatcher/private.h.tex
+
+\component thesis/sources/patternmatcher/ast.h.tex
+
+\component thesis/sources/patternmatcher/mempool.h.tex
+
+\component thesis/sources/patternmatcher/mempool.c.tex
+
+\component thesis/sources/patternmatcher/ast.c.tex
+
+\component thesis/sources/patternmatcher/parse.c.tex
+
+\component thesis/sources/patternmatcher/compile.h.tex
+
+\component thesis/sources/patternmatcher/compile.c.tex
+
+\component thesis/sources/patternmatcher/execute.c.tex
+
+\component thesis/sources/patternmatcher/patternmatcher.c.tex
+
+
+% TODO: \section{Simulating {\NFA}s by Walking the \AST}
+
+
+% TODO: \section{Converting {\AST}s to Thompson {\NFA}s}
+
+
+% TODO: \section{Converting {\AST}s to Byte||code||compiled Thompson {\NFA}s}
+
+
+% TODO: \section{Converting {\AST}s to {\TNFA}s}
+
+\stopcomponent

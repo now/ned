@@ -1,0 +1,1611 @@
+\startcomponent thesis/chapters/definitions
+
+\project masters-project
+\product thesis
+
+\chapter
+  [definitions]
+  {Preliminaries}
+
+There are quite a few terms used in this paper that need explanation before we
+can venture into more interesting regions of the topic at hand.  The following
+discussion is rather exhaustive and, as such, also rather long.  Most of it,
+however, should be easy to follow and it’s not necessary to keep everything
+discussed fresh in memory: simply return here whenever something unfamiliar is
+being discussed.
+
+
+\section
+  [symbols]
+  {Symbols}
+
+To begin we need to define what can be seen as the atoms of the definitions to
+follow, \Term{symbols}.  The term \DefineTerm{symbol} is, however, not as well
+defined as an atom in physics.  A symbol can be just about anything.  When we
+are dealing with natural languages, a symbol is usually a single character or
+ideogram.  It can, however, be whole words, sentences, or any other unit that
+suits the current application.  A symbol itself carries no meaning.  It is
+given a meaning, which we refer to as its \DefineTerm{denotation}.  This
+concept is perhaps easier to understand if you consider an ideogram in Kanji
+(Japanese ideograms) to be a single unit and yet they can express a concept or
+an idea that would require many words to explain in English.  The connection
+between ideogram (symbol) and its meaning (denotation) may often seems
+arbitrary, at least to someone unfamiliar with Kanji.
+
+Although the denotation of most symbols is irrelevant to the rest of our
+discussion, we do give one symbol a special denotation.  The symbol
+ε|<|\CharacterName{greek small letter epsilon} or simply
+\DefineTerm{epsilon}|>|has the denotation “not a symbol”.  This may seem rather
+contrived, “how often do we need to denote no symbol?”, but it turns out to be
+very useful when we discuss nondeterministic finite automata later on in
+\insection[nondeterministic finite automata]).  Until then, you may think of it
+as being the arithmetic zero of alphabets.  Speaking of alphabets\dots
+
+
+\section{Alphabets}
+
+An \DefineTerm{alphabet} is a nonempty but finite set of symbols.  The symbol
+Σ|<|\CharacterName{greek capital letter sigma} or simply
+\DefineTerm{sigma}|>|is used to signify an alphabet.  A few examples of
+commonly occurring alphabets are:
+
+\startitemize
+  \item $Σ = \{0, 1\}$, the \DefineTerm{binary alphabet}
+
+  \item $Σ = \{a, b, \dots, z\}$, the set of all lowercase English letters
+
+  \item $Σ = \text{\Unicode}$, the set of all symbols in the \Unicode\
+    character set (see \insection[character sets])
+\stopitemize
+
+As a special case, $Σ^ε$ denotes the alphabet $Σ ∪ \{ε\}$, i.e., the symbols of
+$Σ$ together with the non||symbol ε.
+
+
+\section{Strings}
+
+A string is simply an amount of symbols from a common alphabet strung together
+in a sequence.  Strings are sometimes called
+\seeindex{word}{string}\Term{words}, and the symbol $w$ is often used to denote
+them.
+
+\startdefinition[definition:string]
+  A \DefineTerm{string} is a finite sequence of symbols $a_1 a_2 \dots a_n$,
+  where $a_1$,~$a_2$, \dots,~$a_n$ are all taken from a common alphabet Σ.
+\stopdefinition
+
+Examples of strings include:
+
+\startitemize
+  \item $w = 101$, a string in the binary alphabet
+
+  \item $w = \text{banana}$, the English word for a certain yellow fruit
+
+  \item $w = \spadesuit\color[red]{\heartsuit\diamondsuit}\clubsuit$, the four card suits,
+    in order of precedence in Bridge
+\stopitemize
+
+An important string that needs defining is the empty string.  This string is
+created by taking no symbols from the chosen alphabet and can thus be created
+from any alphabet.  We overload the denotation of ε and allow it to denote the
+empty string as well.  This may seem confusing at first, but as the empty
+string is such that it contains no symbols, the denotation is not unwarranted.
+
+\startdefinition
+  The \DefineTerm{empty string}, denoted ε, is the sequence of no symbols
+  chosen from an alphabet Σ.
+\stopdefinition
+
+It’s often necessary to know the number of symbols comprising a given string,
+so we need a way to denote what is known as the \Term{length} of a string.
+
+\startdefinition
+  The \DefineTerm{length} of a string $w = a_1 a_2 \dots a_n$, denoted $|w|$,
+  is $n$.
+\stopdefinition
+
+This shouldn’t be a terribly complex concept, but just to make sure let’s look
+at some examples:
+
+\startitemize
+  \item If we let $w$ be the English word “banana”, then $|w| = 6$.
+
+  \item If we let $w = ε$, then $|w| = 0$.
+
+  \item Finally, just to show that we don’t require the indirection of $w$,
+    $|monkey| = 6$.
+\stopitemize
+
+Later on, as we get engrossed in the processing of strings, we will need to
+be able to discuss only specific subsequences of strings.  We therefore define
+the possible subsequences, or substrings, that are possible for any given
+string.
+
+\startdefinition
+  We can create subsequences of strings, collectively referred to as
+  \DefineTerm[substring]{substrings}, in any of the following six ways:
+
+  \term{\index{string+prefix}prefix} A \Term{prefix} of the string
+    $w = a_1 a_2 \dots a_n$ is a string $p = a_1 a_2 \dots a_k$, for $k ≤ n$.
+    For example, both {\em ban} and {\em banana} are prefixes of {\em banana}.
+
+  \term{\index{string+prefix+proper}proper prefix} A \Term{proper prefix}
+    of the string $w = a_1 a_2 \dots a_n$ is a string $p = a_1 a_2 \dots a_k$,
+    for $k < n$.  For example, {\em ban} is a proper prefix of {\em banana},
+    whereas the word {\em banana} itself isn’t.
+
+  \term{\index{string+substring}substring} A \Term{substring} of the string
+    $w = a_1 a_2 \dots a_n$ is a string $s = a_j a_{j+1} \dots a_k$, for
+    $j ≤ k ≤ n$.  For example, {\em ban}, {\em banana}, and {\em
+    nan\footnote{Someones grandmother (affectionate), a delicious Indian
+    bread, and even \NaN\ or {\em Not a Number} used in computing to denote the
+    numerical value of not having a numerical value.}} are substrings of the
+    word {\em banana}.  Furthermore, with this definition, ε is a substring of
+    any string $w$.
+
+  \term{\index{string+substring+proper}proper substring} A
+    \Term{proper substring} of the string $w = a_1 a_2 \dots a_n$ is a string
+    $s = a_j a_{j+1} \dots a_k$, for $j < k < n$.  For example, {\em nan}, {\em
+    ana\footnote{A collection of anecdotes about a person or place.}}, and {\em
+    anan\footnote{One of the Israelites who sealed the covenant after the
+    return from Babylon.}} are proper substrings of the word {\em banana}.
+    With this definition, $\epsilon$ isn’t a proper substring of any string
+    $w$.
+
+  \term{\index{string+suffix}suffix} A \Term{suffix} of the string
+    $w = a_1 a_2 \dots a_n$ is a string $s = a_k a_{k + 1} \dots a_n$, for $k ≤
+    n$.  For example, both {\em ana} and {\em banana} are suffixes of {\em
+    banana}.
+
+  \term{\index{string+suffix+proper}proper suffix} A \Term{proper suffix}
+    of the string $w = a_1 a_2 \dots a_n$ is a string $s$, where $s = a_k a_{k
+    + 1} \dots a_n$ and $1 < k \leq n$.  For example, {\em ana} is a proper
+    suffix of {\em banana}, whereas the word {\em banana} itself isn’t.
+\stopdefinition
+
+
+\section
+  [languages]
+  {Languages}
+
+To introduce the concept of languages, we must first explain a notation.  If
+Σ is an alphabet, then $Σ^k$ is the set of strings of length $k$ we get by
+taking all possible combinations and permutations of the symbols in Σ.  An
+example may make the meaning of this notation a bit clearer.
+
+\example If $Σ = \{0, 1\}$, then $Σ^0 = \{ε\}$, $Σ^1 = \{0, 1\}$, $Σ^2 = \{00,
+01, 10, 11\}$, and so on.
+
+As a special case, $Σ^∗$ denotes the set of all strings over the given
+alphabet, also known as the \DefineTerm{closure} of it.  That is,
+
+  % TODO: can’t put ∞ instead of \infty here, and ∗ must be in {}
+  $$Σ^{∗} = \SetUnion_{i = 0}^\infty Σ^i.$$
+
+Also, $Σ^+$ denotes the set of all strings over the given alphabet,
+excluding the empty string ε; formally
+
+  $$Σ^+ = \SetUnion_{i = 1}^\infty Σ^i.$$
+
+Now we’re ready to discuss languages.  A subset chosen freely|<|though, often
+by some set of rules, called a \Term{grammar}|>|from a given $Σ^∗$ is
+called a language.
+
+\startdefinition
+  A \DefineTerm{language} $L$ over an alphabet Σ is a subset of $Σ^∗$.
+\stopdefinition
+
+Just as we have had empty strings we can have empty languages.  You will not
+see much reference to them in this manuscript, but we define them here for
+completeness.
+
+\startdefinition
+  The \DefineTerm[language+empty]{empty language}, denoted $∅$, is the
+  language over an alphabet Σ containing no strings from $Σ^∗$.
+\stopdefinition
+
+
+\section{Grammars}
+
+In the previous section on languages we mentioned that a language is often
+constructed by a set of rules applied on a $Σ^∗$.  This set of rules is called
+a \DefineTerm{grammar}.  We will discuss grammars from the outlook of linguist
+and political commentator \Name{Noam}{Chomsky}, who created a model for
+grammars known as the \DefineTerm{Chomsky hierarchy} \cite[Chomsky56].
+
+Chomsky’s hierarchy is an attempt to classify different kinds of languages by
+the complexity of their grammar.  And even though they were originally intended
+to be a potential model of natural languages, they have found many uses in
+describing artificial languages such as computer programming languages.
+
+The hierarchy consists of four levels, identified as \Term{type 0}, \Term{type
+1}, \Term{type 2}, and \Term{type 3}.  The classes are ordered in such a way
+that each following level is contained in the previous, thus
+$\text{type 0} \supsetneq \text{type 1} \supsetneq
+ \text{type 2} \supsetneq \text{type 3}$.  As will be discussed in the coming
+subsections, each successive type adds some restriction to the previous type in
+the way the grammars may be created.  The result of adding these restrictions
+are twofold:
+
+\startpropertylist
+  \sym{$-$} The languages that can be constructed by the grammars will become
+    simpler with each added restriction
+  \sym{$+$} The abstract machine that is required to determine whether an input
+    string is recognized by the grammars become simpler
+\stoppropertylist
+  
+The bottom line is that we loose some expressiveness by choosing a type $n$
+grammar over a type $m$ grammar, where $n > m$, but we make up for it by being
+able to use machinery that is faster to run on a computer.
+
+We’ll soon discuss the details about what it means for an input string to be
+recognized by a grammar, but let’s describe the types of grammars in the
+hierarchy first.
+
+\subsection{Type 0 -- Unrestricted Grammars}
+
+A type 0 grammar is a 4-tuple
+
+  $$G = (N, T, P, S),$$
+
+where $N$ and $T$ are disjoint finite sets of \Term{nonterminals} and
+\Term{terminals} respectively, $P$ is a finite set of formulas of the form
+$α → β$ called \Term{productions}, and $S$ is an element of $N$ known as the
+\DefineTerm{start symbol}. The two variables $α$ and $β$ used in the
+productions are strings of nonterminals and terminals from the language
+$(N ∪ T)^∗$.
+
+Let us dive right in, showing an example of a grammar of type 0 found in
+\cite[HopcroftUllman79].
+
+\startexample[example:type 0 grammar]
+  We wish to create a grammar that matches the language $L$ defined as
+
+    $$L = \{\,a^i \mid \hbox{$i$ is a positive power of 2}\,\}.$$
+
+  Let’s start by giving a formal definition of the grammar, then we’ll explain
+  the notation used and how we can define it slightly less formally (for future
+  definitions of grammars in this paper), and finally how the grammar’s
+  productions actually work together.
+
+  We define a grammar $G = (N, T, P, S)$ where
+
+  \placeformula[formula:type 0]
+    \startnathequation
+      N = \{ A, B, C, D, E, S \}, \\
+      T = \{ a \}, \\
+      P = \{ \wall S \to ACaB, Ca \to aaC, \\
+                  CB \to DB, CB \to E, \\
+                  aD \to Da, AD \to AC, \\
+                  aE \to Ea, AE \to \epsilon \},
+            \return
+      S = S.
+    \stopnathequation
+
+% TODO: we still need to explain how this works
+
+\stopexample
+
+The grammar in \inexample[example:type 0 grammar] is complete.  We, however,
+still need to explain the notation and list a few conventions that we will try
+to follow when writing grammars.
+
+\startenumerate
+  \item It is customary to use capital letters $A$, $B$, $C$, $D$, $E$, and $S$
+    for nonterminals, and use $S$ as the start symbol unless otherwise stated.
+    Additionally, if no $S$ exists in a grammar, the first symbol used in a
+    production of the grammar is assumed to be the start symbol.
+
+  \item Lowercase letters $a$, $b$, $c$, $d$, $e$, digits, and strings typeset
+    in a fixed||width typeface are terminals.
+
+  \item The capital letters $X$, $Y$, and $Z$ denote symbols that may be either
+    terminals or nonterminals.
+
+  \item The lowercase letters $u$, $v$, $w$, $x$, $y$, and $z$ denote strings
+    of terminals.
+
+  \item The lowercase Greek letters $α$, $β$, $γ$, and $δ$ denote strings of
+    variables and terminals (empty or nonempty stated when distinction
+    necessary).
+\stopenumerate
+
+Also, the meaning of a production of the form
+
+  $$α → βγ$$
+
+is that one way of constructing the terminals and nonterminals of $α$ is by
+taking the terminals and nonterminals of $β$ and following them by those of
+$γ$.
+
+If we adhere to the above listed conventions, we can easily generate a formal
+grammar from a somewhat less formal definition of the grammar of
+\informula[formula:type 0] where we only list the productions of the grammar:
+
+\startitemize[standard,n,packed,columns,four]
+  \nop $ S → ACaB,$
+  \nop $Ca → aaC,$
+  \nop $CB → DB,$
+  \nop $CB → E,$
+  \nop $aD → Da,$
+  \nop $AD → AC,$
+  \nop $aE → Ea,$
+  \nop $AE → ε.$
+\stopitemize
+
+Now, let’s see how this set of productions is able to match the language that
+we introduced in \inexample[example:type 0 grammar].  Nonterminals $A$ and $B$
+serve as left and right end||markers for sentential forms.  Nonterminal $C$ is a
+marker that moves through the string of $a$s between these end||markers and
+doubles them by applying production 2.  Applying this idea, we get the
+following steps in an algorithm to recognize any string of the language:
+
+\startitemize[standard,n]
+  \item Apply production 2, moving $C$ through the string of $a$s.
+  %After the first iteration, we will thus have the string $AaaCB$, which may be turned into $aa$
+
+  \item When $C$ reaches the right end||marker $B$, we can apply either
+    production 3 or production 4:
+    
+    \startitemize[standard,n]
+      \item If we choose production 3, the $C$ is replaced by $D$ and we apply
+        production 5, which moves the $D$ leftwards through the $a$s until it
+        reaches the left end||marker $A$.  At this point we apply production 6
+        to turn the $D$ into a $C$ again, and we return to step 1.
+      
+      \item If we instead choose production 4, the $C$ and the right
+        end||marker $B$ are replaced by $E$ and, by repeatedly applying
+        production 7, this $E$ is then moved leftwards until the left
+        end||marker $A$ is reached.  At this point, both $A$ and $E$ are
+        removed from the string by production 8, leaving us with a string of
+        $2^n$ a’s, for some $n > 0$, and we are done.
+    \stopitemize
+\stopitemize
+
+We haven’t proven that this is algorithm actually recognizes all strings of the
+language, but it’s straightforward to see that step 2 doubles the number of
+$a$s during each iteration and we are allowed to terminate after any doubling
+by choosing to turn the $C$ into an $E$.  If we’re not done, we replace the $C$
+by a $D$ and start the doubling process over again.
+
+\subsection{Type 1 -- Context||sensitive Grammars}
+
+So named for their defining property,
+\index{grammar+context||sensitive}\Term{context||sensitive grammars}'
+productions are of the form
+
+  $$αAβ → αγβ,$$
+
+where $A$ is a nonterminal, $α$,~$β$ is a string of terminals and nonterminals,
+and $γ$ is a nonempty string of terminals and nonterminals.  The
+context||sensitivity arises from the fact that $α$ and $β$ form the context of
+$A$ and determine when $A$ can be replaced by $γ$.
+
+Formally, a type 1 grammar has the same structure as a type 0 grammar, with the
+restriction that only {\em one} left||hand side nonterminal gets replaced in
+a production rule.  This means that
+
+  $$αAβ → αγβ$$
+
+is fine, whereas
+
+  $$αAβB → αγβδ$$
+
+isn’t.
+
+\inexample[example:type 1 grammar] shows a type 1 grammar defining the language
+
+  $$L = \{\,a^n b^n c^n \mid n > 0\,\}.$$
+
+\startexample[example:type 1 grammar]
+  In this example we will show a grammar that defines the language
+  $L = \{\,a^n b^n c^n \mid n > 0\,\}$, i.e., the string of $n$ $a$’s, followed
+  by $n$ $b$’s, and $n$ $c$’s.  A grammar that matches this specification is
+  given by the following productions:
+
+  \startitemize[standard,n,packed,columns,four]
+    \item $A → aBAc,$
+    \item $A → abc,$
+    \item $Ba → aB,$
+    \item $Bb → bb.$
+  \stopitemize
+
+  A derivation of one of the strings in $L(G)$, $aaabbbccc$, follows:
+
+  \placeformula
+    \startnathequation
+      A \wall \to aBAc      \quad \text{(by production 1)} \\
+              \to aBaBAcc   \quad \text{(by production 1)} \\
+              \to aBaBabccc \quad \text{(by production 2)} \\
+              \to aaBBabccc \quad \text{(by production 3)} \\
+              \to aaBaBbccc \quad \text{(by production 3)} \\
+              \to aaaBBbccc \quad \text{(by production 3)} \\
+              \to aaaBbbccc \quad \text{(by production 4)} \\
+              \to aaabbbccc \quad \text{(by production 4)}.
+      \return
+    \stopnathequation
+\stopexample
+
+\subsection{Type 2 -- Context||free Grammars}
+
+\index{grammar+context||free}\Term{Context||free grammars} are so named due to
+the fact that transformation of a nonterminal through a production is done
+independently of its context.  That is, a type 2 grammar has the same structure
+as a type 1 grammar, with the added restriction that the left||hand side of a
+production does not contain any terminals and contains only {\em one}
+nonterminal.
+
+An example, similar to that given for context||sensitive grammars in 
+\inexample[example:type 1 grammar], of a context||free grammar is
+
+\placeformula[formula:matching delimiters]
+  \startnathequation
+    S → aSb, \\
+    S → ε,
+  \stopnathequation
+
+which generates the language $L = \{\,a^n b^n \mid n \geq 0\,\}$.
+
+An instance of a language that is defined by the grammar given in
+\informula[formula:matching delimiters] is the language of matching
+parentheses\footnote{This language is far from as interesting as the language
+of evenly nested parentheses, though the latter can also be described by a
+context||free grammar by adding another production $S → SS$ to the grammar
+given in \informula[formula:matching delimiters].},
+
+\placeformula[formula:evenly nested parentheses]
+  \[L = \{\,\text{(}^n \text{)}^n \mid n ≥ 0\,\}.\]
+
+Context||free grammars play an important role in defining computer programming
+languages, as almost all modern programming languages can be described by a
+context||free grammar.  This is perhaps not so much a result of these languages
+not being conceived to require more than what context||free grammars provide,
+rather it’s the fact that it’s simple to write recognizers (\insection[finite
+automata]) for them.  These recognizers are known as \DefineTerm{push||down
+automata} or \seeindex[PDA]{\PDA}{push||down automata}{\PDA}s, and run
+fast enough to be viable for use in the parsing step of a programming language
+implementation.
+
+The uses of context||free grammars is generally outside the scope of this
+manuscript.  For more information on context||free grammars, push||down
+automata, and other technologies relating to programming languages, see
+\cite[AhoSethiUllman87].
+
+\subsection{Type 3 -- Regular Grammars}
+
+The most restrictive of the four, type 3 grammars are still useful in
+describing many important languages, such as all {\em finite} languages.  As
+\cite[Forsberg01]\ points out, regular grammars can also be used to approximate
+non||regular grammars.  For example, the language of evenly nested parentheses
+in \informula[formula:evenly nested parentheses] can be approximated by
+setting some arbitrary limit on the nesting level so that it’s made finite,
+e.g.,
+
+\placeformula
+  \[L = \{\,\text{(}^n \text{)}^n \mid 0 ≤ n ≤ m\,\}, \quad
+      \text{where $m$ is some arbitrarily chosen limit.}\]
+
+Formally, a type 3 grammar adds the restriction that every production must be of
+the form
+
+\placeformula[formula:type 3 left-linear]
+  \[A → wB, \\
+    A → w, \\
+    A → ε;\]
+
+or
+
+\placeformula[formula:type 3 right-linear]
+  \[A → Bw, \\
+    A → w, \\
+    A → ε.\]
+
+Grammars where each production is of the form shown in
+\informula[formula:type 3 left-linear] are called
+\DefineTerm[grammar+left||linear]{left||linear grammars} and those of the form
+shown in \informula[formula:type 3 right-linear] are called
+\DefineTerm[grammar+right||linear]{right||linear grammars}.
+
+\startexample
+  A simple example of a type 3 grammar is one that generates the language
+  $L = \{\,a^n \mid n > 0\,\}$ where our grammar simply consists of the
+  productions
+
+  \[S → aS, \\
+    S → a.\]
+\stopexample
+
+\startexample
+  A more interesting example is a grammar that generates the language that will
+  function as a running  example throughout this paper. This language is the
+  set of binary strings with an even number of zeros and is defined as
+  $L = \{\,x \mid x \in \{0,1\}^\KStar ∧
+           \text{$x$ contains an even number of 0s}\,\}$.
+
+  \[S → 0A0S, \\
+    S → 1S, \\
+    S → ε, \\
+    A → 1A, \\
+    A → ε.\]
+\stopexample
+
+The languages that regular grammars generate are the main focus of the rest of
+this manuscript, and the following sections will discuss them in further detail.
+
+
+\section{Regular Languages}
+
+\DefineTerm[language+regular]{Regular languages}, also known as
+\DefineTerm{regular sets}, are the languages that are generated by a type 3
+grammar, contain only those strings that a given regular expression denotes,
+and a finite automaton accepts.  We’ll see what this implies in the two
+following sections.
+
+
+\section
+  [regular expressions]
+  {Regular Expressions}
+
+A \DefineTerm{regular expression} is a denotation for languages.  Specifically,
+it describes the languages that can be constructed by the following operations:
+
+\term{\index{union}union} The set of strings that are in either of two
+languages $L$ and $M$, and is denoted $L ∪ M = \{\,x \mid x ∈ L ∨ x ∈ M\,\}$.
+
+\term{concatenation} The set of strings that are the
+  \DefineTerm{concatenation} of strings from language $L$ with those of
+  language $M$, denoted $L∘M = \{\,xy \mid x ∈ L ∧ y ∈ M\,\}$;
+  $L∘M$ is often shortened to $LM$, just as $x⋅y$ is shortened to $xy$ for
+  arithmetic multiplication.
+
+\term{\index{closure}closure} The \DefineTerm{closure} of a language|<|often
+  referred to as \DefineTerm{Kleene closure} or \DefineTerm{Kleene’s
+  closure}\footnote{The language “experts” seem to still be out on that
+  one\dots}, paying homage to the inventor of the notation, Prof. Stephen C.
+  Kleene|>|is the set of strings that can be formed by taking any number of
+  strings from a language $L$ any number of times and concatenating them.  The
+  notation for closure is $L^\KStar = \SetUnion_{i = 0}^{∞} L^i$, where
+  $L^0 = \{ε\}$, $L^1 = L$, and, for $i > 1$, $L^i = LL^{i - 1}$.
+
+Now, let’s define regular expressions over an alphabet Σ.  We begin by defining
+their syntax and semantics as follows, where we denote the language a regular
+expression $r$ describes as $L(r)$:
+
+\term{\index{atom}atoms} The non||symbol ε and each symbol in Σ is a regular
+  expression;  $L(ε) = \{ε\}$ and for all $a$ in Σ, $L(a) = \{a\}$.
+
+\term{\index{alternation}alternation} If $r_1$ and $r_1$ are regular
+  expressions, then so is $(r_1 \Alt r_2)$.  The language of this regular
+  expressions is the union of the two regular expressions' languages: $L((r_1
+  \Alt r_2)) = L(r_1) ∪ L(r_2)$.
+
+\term{\index{concatenation}concatenation} If $r_1$ and $r_2$ are regular
+  expressions, then so is $(r_1∘r_2)$, often shortened to $(r_1r_2)$---again,
+  like arithmetic multiplication.  The language of this regular expression is
+  the concatenation of the languages of the two regular expressions,
+  $L((r_1r_2)) = L(r_1)L(r_2)$.  Concatenation is also known as
+  \DefineTerm{juxtaposition}.
+
+\term{\index{closure}closure} If $r$ is a regular expression, then so is
+  $r^∗$ and $L(r^∗) = L(r)^∗$, i.e., the closure of the language denoted by
+  $r$.
+
+To make it easier to deal with regular expression, we can avoid using a lot of
+parentheses by giving each of our operators a level of precedence that avoids
+ambiguity, and lets us skip many of the otherwise necessary parentheses.
+
+\startdefinition
+  The \DefineTerm{precedence} of the operations on regular expressions are as
+  follows (in increasing level of precedence):
+  \startenumerate
+    \item $r_1 \Alt r_2$
+    \item $r_1∘r_2$
+    \item $r^∗$
+    \item $(r)$
+  \stopenumerate
+\stopdefinition
+
+We now give some examples to make the syntax and semantics a bit clearer and
+see what languages some regular expressions actually denote.
+
+\startexample[example:regular expressions]
+  We begin with some binary strings where the alphabet is, as usual, $Σ = \{0,
+  1\}$:
+
+  \[L((01^{∗}0 \Alt 1)^{∗}) = \{ε, 00, 001, 010, 100, 0000, \dots\}.\]
+
+  This regular expression’s language is the set of all strings from the binary
+  alphabet that have an even number of zeros.  Regular expressions are often
+  not unique, and a possible alternative to the previous one is
+
+  \[L((1^{∗}01^{∗}01^{∗})^{∗}) = \{ε, 00, 001, 010, 100, 0000, \dots\}.\]
+\stopexample
+
+\startexample
+  A more useful regular expression is the one whose language consists of the
+  singular and plural forms, and possible spellings and misspellings of the
+  word {\em appendix}.  The alphabet used in this example is the set of
+  lowercase English letters, i.e, $Σ = \{a, b, \ldots, z\}$, but we could
+  have restricted it to only those letters that actually occur in the regular
+  expression, namely $\{a, c, d, e, i, n, p, s, x\}$:
+
+  \placeformula
+    \[L(ap(p \Alt ε)endi(x(es \Alt ε) \Alt ces)) = \{
+      \wall \text{appendix}, \text{apendix}, \text{appendixes}, \\
+            \text{apendixes}, \text{appendices}, \text{apendices}\}
+      \return\]
+\stopexample
+
+% TODO: more examples
+
+On a historical note, the notation of regular expressions is due to Kleene
+\cite[Kleene56], who used it when describing the characteristics of regular
+sets in mathematics.
+
+Later, when we discuss asymptotic behaviors of finite automata
+(\inchapter[construction]), we’ll need a way to denote the length of a
+regular expression.  To keep things organized, let’s define it now.
+
+\startdefinition[length of a regular expression]
+  The \DefineTerm[regular expression+length]{length} of a regular expression
+  $r$, denoted $|r|$, is the defined in the following recursive manner.
+  \startitemize
+    \item If $r$ is an atom, then $|r| = 1$.
+    \item If $r = r_1r_2$, then $|r| = |r_1| + |r_2|$.
+    \item If $r = r_1 \Alt r_2$, then $|r| = |r_1| + |r_2| + 1$.
+    \item If $r = {r_1}^∗$, then $|r| = |r_1| + 1$.
+    \item If $r = (r_1)$, then $|r| = |r_1|$.
+  \stopitemize
+  For example, let $r = (01^∗0 \Alt 1)^∗$, then $|r| = 7$.
+\stopdefinition
+
+
+\section
+  [finite automata]
+  {Finite Automata}
+
+To be able to determine if a certain string is in a language or not we can
+employ what is called a \DefineTerm{recognizer} that, given a language and an
+input string $w$, answers “yes” if $w$ is in the language and “no” otherwise.
+\DefineTerm[finite automata]{Finite automata} are recognizers that recognize
+precisely the regular languages, meaning that they are ideal for use with
+regular expressions, as regular expressions describe precisely the regular
+languages.  Thus, when we want to determine if a given string is in the
+language denoted by a given regular expression, we first create a finite
+automaton that recognizes the language denoted by the regular expression and
+then feed the string to the automaton.  The automaton will then
+\DefineTerm{read} the symbols of the string in order and if, when all symbols
+have been read, the automaton is in an \DefineTerm[state+accepting]{accepting
+state}, it will answer “yes”.
+
+The relationship between regular languages, regular expressions, and finite
+automata is shown in \infigure[figure:relationship].
+
+  \placedescribedfigure
+    []
+    [figure:relationship]
+    {The relationship between regular languages, regular expressions, and
+     finite automata.  Counterclockwise arrows are labeled on the outer edge
+     of the circle, while clockwise arrows are labeled on the inner.  Thus,
+     regular languages are {\em described by} regular expressions and {\em
+     accepted by} finite automata.}
+    {\externalfigure[definitions:relationship]}
+
+To get a visual idea of how finite automata operate one can think of them as
+abstract machines that move an input cursor along an input string, keeping
+track of a state that determines whether the symbol under the cursor is part of
+any prefix of the any of the strings in the language that the automaton
+accepts.  Once the input cursor reaches the right end of the string, the string
+is accepted.  If the automaton is unable to move the cursor beyond a certain
+symbol in the input, it will have no choice but to reject the string as a
+whole.  \infigure[figure:finite automaton] displays a possible representation
+of a finite automaton.
+
+  \placedescribedfigure
+    []
+    [figure:finite automaton]
+    {A finite automaton.  The finite control maintains the cursor and keeps
+     track of the state of the automaton.}
+    {\externalfigure[definitions:finite automaton]}
+
+\subsection{Deterministic Finite Automata}
+
+It is time to introduce the two variants of finite automata, namely those
+that are deterministic and those that are nondeterministic.  We begin with
+those that are deterministic in nature, as they are somewhat easier to
+describe and reason about.
+
+\startdefinition
+  A
+  \DefineTerm[finite automaton+deterministic]{deterministic finite automaton},
+  or \seeindex[DFA]{\DFA}{deterministic finite automaton}\DFA, is a 5-tuple
+
+    \[A = (S, Σ, δ, s_0, F),\]
+
+  where the elements constituting it are described below:
+
+  \startitemize
+    \item $S$ is a finite set of \DefineTerm{states}
+
+    \item $Σ$ is the alphabet of possible \DefineTerm{input symbols}
+
+    \item $δ\colon S×Σ → S$ is the \DefineTerm{transition function}, which maps
+      the current state and input symbol to the next state to enter
+
+    \item $s_0$ is a state in $S$ known as the
+      \index{states+start}\Term{start state} and is the state the automaton
+      will be in before it has read any input
+
+    \item $F$ is a subset of $S$ known as \index{state+final}\Term{final} or
+      \index{states+accepting}\Term{accepting states} and are the states that
+      the automaton will answer “yes” for if it’s in one of them once all input
+      has been read
+  \stopitemize
+\stopdefinition
+
+A deterministic finite automaton starts in the start state $s_0$ and reads
+symbols found in the input alphabet $Σ$ from some input string.  It uses
+the transition function $δ$ to determine what state to enter next, based
+upon the current state and input symbol.  If, when all input has been read, the
+automaton is in an accepting state, being an element of $F$, it \Term{accepts}
+the string, answering “yes”.  Otherwise it \Term{rejects} the string, answering
+“no”.
+
+To describe the manner in which a \DFA\ acts on its input in a more formal
+manner than above, we first need to define a couple of structures and
+operations that we’ll use in this description.
+
+\startdefinition
+  A \DefineTerm{configuration} of a \DFA\ $A$ is a pair $⟨s, w⟩$, where $s ∈ S$
+  is the state that $A$ is in and $w ∈ Σ^∗$ is the unread portion of the input
+  string.  Thus, a configuration acts as an \index{instantaneous
+  description}instantaneous description\footnote{A term with the same meaning
+  used in some literature.} of the automaton.
+\stopdefinition
+
+\startdefinition
+  An \DefineTerm{initial configuration} of a \DFA\ $A$ is a configuration in
+  which the first component is the initial state of $A$ and the second
+  component is the string to be recognized, i.e, $⟨s_0, w⟩$ for some $w ∈ Σ^∗$.
+\stopdefinition
+
+\startdefinition
+  An \DefineTerm{accepting configuration} of a \DFA\ $A$ is a configuration of
+  the form $⟨s, ε⟩$, where the first component is an accepting state of $A$ ($s
+  ∈ F$) and the second component is the empty string.
+\stopdefinition
+
+We also need a way to relate configurations, as we want to use them in
+describing the way a \DFA\ processes its input.
+
+\startdefinition
+  A configuration $⟨s, w⟩$ \DefineTerm{yields} in one step a configuration
+  $⟨s', w'⟩$ if there is an input symbol $a$ such that $s' = δ(s, a)$ and $w =
+  aw'$.  We write this as $⟨s, w⟩ \Yields ⟨s', w'⟩$.
+\stopdefinition
+
+\startdefinition
+  We denote the reflexive, transitive closure of $\Yields$ as $\RTCYields$.
+\stopdefinition
+
+We can now say that $w$ is \DefineTerm{accepted} by a \DFA\ $A$ if
+$⟨s_0, w⟩ \RTCYields ⟨s, ε⟩$ for some state $s$ in $F$.  That is, an
+input string $w$ is accepted by $A$ if there exists some sequence of zero or
+more configurations that begin in the initial configuration
+$⟨s_0, w⟩$ and yields an accepting configuration $⟨s, ε⟩$.
+
+This manner of describing an actual automaton and its path through
+configurations of this automaton is not always very intuitive.  We therefore
+often use a graphical representation known as a transition diagram instead.
+
+\subsection
+  [transition graphs]
+  {Two easier ways of describing finite automata~--~transition graphs and
+  transition tables.}
+
+We represent finite automata graphically with what is known as a transition
+diagram.
+
+\startdefinition
+  Let $A$ be a \DFA.  We associate with $A$ a \DefineTerm{transition diagram},
+  a directed graph $G = (S, E)$ with labeled edges.  The set $E$ of edges and
+  their labels are defined as follows.  If $δ(s, a) = s'$ for states $s$,~$s'$
+  in $S$ and input symbol $a$ in $Σ$, then the edge $(s, s')$ is in $E$ and is
+  labeled $a$.
+\stopdefinition
+
+\startexample[example:even zeros dfa]
+  In \inexample[example:regular expressions] we saw a regular expression,
+  $(01^∗0 \Alt 1)^∗$, that matched the language of all binary numbers with an
+  even number of zeros.  Let’s now create a transition diagram representing a
+  \DFA\ that accepts this language.  The result can be seen in
+  \infigure[figure:even zeros dfa].
+
+  \placefigure
+    []
+    [figure:even zeros dfa]
+    {A \DFA\ for the regular expression $(01^∗ \Alt 1)^∗$.}
+    {\externalfigure[definitions:even zeros dfa]}
+
+  It should be much easier to understand how this automaton operates, than how
+  the regular expression matches a string from this language.  We begin in an
+  accepting state, as we define the empty string to have an even number of
+  zeros in it.  Then, whenever we read a 1, we simply remain in the same
+  state.  However, when we read a 0, we switch state.  Thus, when we have read
+  two 0s, we will have returned to our accepting state.
+
+  Let us feed the string $0101$ as input to the automaton.  It begins its
+  execution at the far left of this string and in state $s_0$:
+
+    \midaligned{\externalfigure[definitions:even zeros dfa ex-1]}
+
+  The first symbol to read is 0, so we follow the transition to $s_1$:
+
+    \midaligned{\externalfigure[definitions:even zeros dfa ex-2]}
+
+  We then read a 1, so we follow the transition returning to the same state,
+  $s_1$:
+
+    \midaligned{\externalfigure[definitions:even zeros dfa ex-3]}
+
+  We have now arrived at the second 0, so we follow the transition back to
+  $s_0$:
+
+    \midaligned{\externalfigure[definitions:even zeros dfa ex-4]}
+
+  Finally, we read a 1, leaving us at $s_0$:
+
+    \midaligned{\externalfigure[definitions:even zeros dfa ex-5]}
+
+  As $s_0$ is a final state, the string $0101$ is accepted by the automaton,
+  which is a relief, as it contains an even number of zeros.
+\stopexample
+
+We can easily describe four out of five components of the \DFA\ in
+\inexample[example:even zeros dfa]:
+
+  \[A = (\{s_0, s_1\}, \{0, 1\}, δ, s_0, \{s_0\}).\]
+
+The transition function $δ$, however, isn’t as simple to describe.  We
+could perhaps list it as
+
+  \[δ = \{ (s_0, 1) → s_0, (s_0, 0) → s_1,
+           (s_1, 1) → s_1, (s_1, 0) → s_0 \},\]
+
+which is simple, but doesn’t scale very well.  Let’s instead use a table where
+there is a row for each state and a column for each input symbol.
+
+\startdefinition
+  A \DefineTerm{transition table} is a table where each column lists an input
+  symbol, each row lists a state, and each cell’s value is the destination
+  state of the given state (row) upon reading a certain symbol (column).
+\stopdefinition
+
+That was a rather lame definition, so let’s look at an example instead.
+
+\startexample
+  We wish to create a transition table for our \DFA\ in
+  \inexample[example:even zeros dfa].  We have two states, $s_0$ and $s_1$, and
+  two input symbols, 0 and 1.  We thus need a $2×2$||table and fill the
+  cells with the destination states for each state and input, resulting in
+  \intable[table:even zeros transition table].
+
+  \placetable
+    []
+    [table:even zeros transition table]
+    {Transition Table for the \DFA\ of \inexample[example:even zeros dfa].}
+    \starttable[|r|cw(3em)|cw(3em)|]
+    \HL
+    \NC \bf State \VL\TWO{\bf Input Symbol} \NC\AR
+    \DC           \DL[2]                       \DR
+    \NC           \VL 0     \VL 1           \NC\AR
+    \HL
+    \NC $s_0$     \VL $s_1$ \VL $s_0$       \NC\AR
+    \NC $s_1$     \VL $s_0$ \VL $s_1$       \NC\AR
+    \HL
+    \stoptable
+\stopexample
+
+Now that we’ve seen how deterministic finite automata are created and how
+they can be used, it’s time to introduce their equivalent but radically
+different nondeterministic counterpart.
+
+\subsection
+  [nondeterministic finite automata]
+  {Adding nondeterminism to finite automata -- harder to define; easier to use.}
+
+A nondeterministic finite automaton is much like a deterministic one, but with
+a much more flexible transition function; and even though they accept the exact
+same languages, many of their runtime properties differ widely.
+
+\startdefinition
+  A nondeterministic finite automaton, or
+  \seeindex[NFA]{\NFA}{nondeterministic finite automaton}\NFA, is a 5-tuple
+
+    \[A = (S, Σ, δ, s_0, F),\]
+
+  where the elements constituting it are described below:
+
+  \startitemize
+    \item $S$ is a finite set of \DefineTerm{states}
+
+    \item $Σ$ is the alphabet of possible \DefineTerm{input symbols}
+
+    \item $δ\colon S×Σ^ε → \PowersetOf{S}$ is the \DefineTerm{transition
+      function}, which maps the current state and input symbol to a subset of
+      states in $S$ to enter
+
+    \item $s_0$ is a state in $S$ known as the \index{states+start}\Term{start
+      state} and is the state the automaton will be in before it has read any
+      input
+
+    \item $F$ is a subset of $S$ known as \index{state+final}\Term{final} or
+      \index{states+accepting}\Term{accepting states} and are the states that
+      the automaton will answer “yes” for if it’s in one of them once all input
+      has been read
+  \stopitemize
+\stopdefinition
+
+A nondeterministic finite automaton starts in the start state $s_0$ and reads
+symbols found in the input alphabet $Σ$ from some input string.  It uses the
+transition function $δ$ to determine what state or states to enter next, based
+upon the current state and input symbol, and following any
+ε||transitions.  If, when all input has been read, the automaton is in
+an accepting state, being an element of $F$, it \Term{accepts} the string,
+answering “yes”.  Otherwise it \Term{rejects} the string, answering “no”.
+
+The nondeterminism of an \NFA\ lies in the transition function mapping to a
+subset of the states of the automaton.  Thus, an \NFA\ can be in any number of
+states at a time\footnote{Well, the number of states it can actually be in is
+limited by the number of states in the automaton.  But the phrase “\dots any
+number of \dots” sounds better than “\dots as many as \dots”.}.
+
+As for {\DFA}s, we define a formal way of representing the transitions made by
+an \NFA.  The definition of a \DefineTerm{configuration}, and its special
+cases, of an \NFA\ is exactly the same as that of a \DFA.  We do, however, need
+to account for our extended alphabet $Σ^ε$ when we define the \Term{yields}
+relation between configurations of an \NFA.
+
+\startdefinition
+  A configuration $⟨s, w⟩$ \DefineTerm{yields} in one step a configuration
+  $⟨s', w'⟩$ if there is is an input symbol $a$ in $Σ^ε$ such that $s' ∈ δ(s,
+  a)$ and $w = aw'$.  We write this as $⟨s, w⟩ \Yields ⟨s', w'⟩$.  Note that
+  $a$ may be either a symbol in $Σ$ or $ε$ by this definition.  If $a = ε$,
+  then the state transition is made independently of the input symbol, i.e., no
+  symbol is read.  This is natural, as $εw' = w'$ and thus $w' = w$.
+\stopdefinition
+
+The above definition leads us to define a term that we use to describe
+transitions that are made without reading a symbol from the input.
+ 
+ε||transitions are an extension to finite automata that allows a state
+transition to be made on the empty string ε.  Normally, an automaton reads a
+symbol and then determines what states to enter next.  With ε||transitions,
+however, we are allowed to enter new states without consuming any input.
+
+\startdefinition
+  An \DefineTerm{ε||transition} is a transition of an \NFA\ $A$ that is made
+  without reading a symbol from the input.  Formally, if $δ(s,ε) = s'$, for
+  some states $s$ and $s'$ in $S$, then there is an ε||transition from $s$ to
+  $s'$.
+\stopdefinition
+
+It is vital to note that the addition of ε||transitions doesn’t extend the
+language of finite automata, yet they are very useful in the construction of
+certain automata, which should be made clear by the following example.
+
+\startexample[example:epsilon decimal number]
+  Say that we wish to create an \NFA\ that accepts floating point numbers of
+  the following form:
+
+  \startenumerate
+    \item An optional $+$ or $-$ sign
+    \item Zero or more digits
+    \item A dot (the decimal point)
+    \item Zero or more digits
+    \item An optional exponentiation consisting of:
+      \startenumerate
+        \item An \quote{e} or \quote{E}
+        \item An optional $+$ or $-$ sign
+        \item One or more digits
+      \stopenumerate
+  \stopenumerate
+
+  \placefigure
+    []
+    [figure:epsilon decimal numbers nfa]
+    {An \NFA\ matching floating point numbers.}
+    {\externalfigure[definitions:epsilon decimal numbers nfa]}
+
+  \infigure[figure:epsilon decimal numbers nfa] shows an \NFA\ with
+  ε||transitions matching this specification.  It is worth noting that whenever
+  we need to optionally match something in the specification we have simply
+  added a ε||transition.  We also use it so that we can end our search after
+  any number of digits after the decimal point.  The role of state $s_3$ is to
+  ensure that at least one digit appeared either before the decimal point ($s_1
+  → s_3 → s_4 → \dots$) or after it ($s_1 → s_2 → s_4 → \dots$).
+\stopexample
+
+\subsection{Properties of deterministic and nondeterministic finite automata.}
+
+The only difference between a deterministic and a nondeterministic finite
+automaton is in the transition function.  For a \DFA\ we only allow transitions
+on “whole” symbols|<|not ε||transitions|>|and a transition may only be made to
+one state per input symbol.  Thus, the automaton is deterministic in the sense
+that it’ll only be in one state at a time.
+
+An \NFA, however, may make transitions without reading a symbol, and a
+transition may be made to many states per input symbol.  Thus, the automaton is
+nondeterministic in the sense that may be in many states at a time.
+
+{\DFA}s and {\NFA}s are equivalent in the sense that they accept the same input.
+They do, however, differ in some of their computational properties.
+
+A \DFA\ will always execute in time linear|<|\Ordo{n}|>|in the size of the
+input.  This is a very nice property that {\NFA}s don’t possess.  An \NFA\ may,
+for pathological cases, execute in time exponential (\Ordo{2^n}) in the size of
+the input.  As a counterweight to the previous statement, {\DFA}s do, have a
+negative property that {\NFA}s don’t share~--~they may (again, for pathological
+cases), require an exponential number of states.  To see why, we must explain
+how we can turn an \NFA\ into a \DFA.
+
+\subsection{Deterministic and nondeterministic finite automata are equivalent,
+and here’s why.}
+
+Actually, we won’t go into the details of why {\DFA}s and {\NFA}s are
+equivalent.  Rather, we show how to create the earlier from the latter.  As
+such, any \NFA\ has an equivalent \DFA\ and, as any \DFA\ is also an \NFA, we
+can informally say that {\NFA}s and {\DFA}s are equivalent.  For a complete
+discussion on this topic (and many more on finite automata) we refer you to
+\cite[HopcroftMotwaniUllman01, HopcroftUllman79].
+
+To create a \DFA\ from an \NFA\ we use what is called
+\DefineTerm{subset construction}, where subsets of the powerset of the states
+of the \NFA\ become the states of the \DFA.  Given an
+\NFA\ $A_N = (S_N, Σ, δ_N, s_0, F_N)$ we construct an
+\DFA\ $A_D = (S_D, Σ, δ_D, s_0, F_D)$, where
+
+  \[S_D = \PowersetOf{S_N} \setminus {∅}, \\
+    ∀S \subseteq S_N ∧ ∀a∈Σ[δ_D(S, a) = \SetUnion_{p∈S}δ_N(p, a)], \\
+    F_D = \{\,S \mid S∈\PowersetOf{S_N} ∧ S ∩ F_N ≠ ∅\,\}.\]
+
+Obviously $S_D$ will have $2^{|S_N|}$ states after the above construction.
+Most states, however, will not be reachable from the start state and can thus
+be removed by an algorithm simulating the above construction.  We’ll therefore
+have much fewer states in $S_D$ in most cases.  There are, however,
+pathological cases for which we’ll get a \DFA\ with an exponential amount of
+states, i.e., where all states {\em are} reachable from the start state.
+
+% TODO: add example (can be found in HopcroftMotwaniUllman) of this?
+
+\subsection{A final type of finite automata that’s well suited for submatch
+addressing: tagged nondeterministic finite automata.}
+%\subsection{Tagged Nondeterministic Finite Automata}
+
+Tagged nondeterministic finite automata are an extension to normal {\NFA}s due
+to Ville Laurikari \cite[Laurikari00,Laurikari01].  They allow information to
+be recorded about the transitions taken of the automata that can be used for
+solving problems such as submatch addressing (\SeeSection[patterns:submatch
+addressing]).
+
+\Note Please delay reading this section until you have read up on submatch
+addressing; it will make a lot more sense by then.
+
+\startdefinition[tagged nondeterministic finite automata]
+  A \DefineTerm{tagged nondeterministic finite automaton} or \TNFA\ is a
+  7-tuple
+
+  \[(S, T, ≺, Σ, δ, s_0, F),\]
+
+  where the elements constituting it are described below:
+
+  \startitemize
+    \item $S$ is a finite set of \DefineTerm{states}
+
+    \item $T$ is a finite set of \DefineTerm{tags}, including the special tag
+      $ω$ that denotes no tag
+
+    \item $≺$ is a total ordering on items of $V$, the set of functions
+      $v\colon T \setminus \{ω\} → \naturalnumbers ∪ \{-1\}$, whose members are
+      known as \DefineTerm{tag||value functions}
+
+    \item $Σ$ is the alphabet of possible \DefineTerm{input symbols}
+
+    \item $δ\colon S×Σ^ε×T → \PowersetOf{S}$ is the \DefineTerm{transition
+      function}, which maps the current state, input symbol, and tag to a subset
+      of states in $S$, being the next set of states to enter.
+
+    \item $s_0$ is a state in $S$ known as the \index{states+start}\Term{start
+      state} and is the state the automaton will be in before it has read any
+      input
+
+    \item $F$ is a subset of $S$ known as \index{state+final}\Term{final} or
+      \index{states+accepting}\Term{accepting states} and are the states that
+      the automaton will answer “yes” for if it’s in one of them once all input
+      has been read
+  \stopitemize
+\stopdefinition
+
+Configurations of a \TNFA\ are a bit more complex than for {\NFA}s or {\DFA}s,
+as we must include information about tags and tag||value functions.
+
+\startdefinition
+  A \DefineTerm{configuration} of a \TNFA\ $A$ is a quadruple $⟨s, u, w, v⟩$,
+  where $s$ in $S$ is the state that $A$ is in, $u$ is the read portion of the
+  input string, $w ∈ Σ^∗$ is the unread portion of the input string, and $v$ is
+  a tag||value function giving a value for each tag.
+\stopdefinition
+
+\startdefinition
+  The \DefineTerm{initial tag||value function},
+  $v_0 = (T \setminus \{ω\} → \{-1\})$, maps each tag to the special tag value
+  $-1$, the value of an unset tag.
+\stopdefinition
+
+\startdefinition
+  An \DefineTerm{initial configuration} of a \TNFA\ $A$ is a configuration in
+  which the first component is the initial state of $A$, the third
+  component is the string to be recognized, and the fourth component is the
+  initial tag||value function, i.e, $⟨s_0, ε, w, v_0⟩$ for some $w ∈ Σ^∗$.
+\stopdefinition
+
+\startdefinition
+  An \DefineTerm{accepting configuration} of a \TNFA\ $A$ is a configuration of
+  the form $⟨s, w, ε, v⟩$, where state $s$ in $F$ is an accepting state.
+\stopdefinition
+
+We use more or less the same method of relating configurations as we have done
+for {\DFA}s and {\NFA}s.
+
+\startdefinition
+  A configuration $⟨s, u, w, v⟩$ \DefineTerm{yields} in one step another
+  configuration $⟨s', u', w', v'⟩$ if there is an input symbol
+  $a$ such that $s' ∈ δ(s, a, t)$ and $w = aw'$.  Then $u' = ua'$ and
+
+    \startnathequation
+      v'(x) = \cases{ |u'|, & if $t ≠ ω$ and $x = t$;\cr
+                      v(x), & otherwise.}
+    \stopnathequation
+
+  We write this as $⟨s, u, w, v⟩ \Yields ⟨s', u', w', v'⟩$.
+\stopdefinition
+
+When drawing a transition diagram for a \TNFA, transitions are also labeled
+with their tags.  For example, $a/t_0$ is the label of a tagged transition on
+the input symbol $a$ with the tag $t_0$.  Not all transitions need to have a
+tag associated with it; we use $ω$|<|\CharacterName{greek small letter omega}
+or just {\em omega}|>|to denote that there is no tag.  We usually omit the
+$/ω$ part of an untagged transition.
+
+\startexample[example:simple tnfa]
+  It’s time to give an example of how a \TNFA\ works.
+
+  \placefigure
+    []
+    [figure:simple tnfa example]
+    {A simple \TNFA\ that matches the language $\{ab\}$ in two possible ways.}
+    {\externalfigure[definitions:simple tnfa]}
+
+  In \infigure[figure:simple tnfa example] we see a \TNFA\ where we have two
+  paths, both labeled $ab$, from the initial to the final state.  The automaton
+  of this figure is $A = (S, T, ≺, Σ, δ, s_0, F)$, where
+
+  \startnathequation
+    S = \{s_0, s_1, s_2, s_3\}, \\
+    T = \{t_0, t_1\}, \\
+    Σ = \{a, b\}, \\
+    s_0 = s_0, \\
+    F = \{s_3\},
+  \stopnathequation
+
+  and $δ$ is defined by the transition table below.  We leave $≺$ undefined, as
+  we don’t need to worry about it yet.  We will, however, be using $≺$ when
+  simulating a \TNFA\ on a computer, see
+  \insection[construction:simulating tnfas].
+
+  \placetable
+    {none}
+    \starttable[|r|cw(3em)|cw(3em)|]
+    \HL
+    \NC \bf State \VL \TWO{\bf Input Symbol}                            \NC\AR
+    \DC           \DL[2]                                                   \DR
+    \NC           \VL a                             \VL b               \NC\AR
+    \HL
+    \NC $s_0$     \VL $\{(s_1, t_0), (s_2, t_1)\}$  \VL $∅$             \NC\AR
+    \NC $s_1$     \VL $∅$                           \VL $\{(s_3, ω)\}$  \NC\AR
+    \NC $s_2$     \VL $∅$                           \VL $\{(s_3, ω)\}$  \NC\AR
+    \NC $s_3$     \VL $∅$                           \VL $∅$             \NC\AR
+    \HL
+    \stoptable
+
+  Note how we in a transition table for a \TNFA\ include both a destination
+  state and a tag that the transition that takes us there is labeled with.
+
+  A trial run with the initial configuration $⟨s_0, ε, ab, v_0⟩$ leaves us with
+  the following two sequences:
+  
+    \[⟨s_0, ε, ab, v_0⟩ \Yields ⟨s_1, a, b, v_1⟩ \Yields ⟨s_3, ab, ε, v_1⟩,\]
+
+  where
+  
+    \startnathequation
+      v_1(x) = \cases{|a| = 1, & if $x = t_0$;\cr
+                      -1, & if $x = t_1$;}
+    \stopnathequation
+
+  and
+
+    \[⟨s_0, ε, ab, v_0⟩ \Yields ⟨s_2, a, b, v_1⟩ \Yields ⟨s_3, ab, ε, v_1⟩,\]
+
+  where
+  
+    \startnathequation
+      v_1(x) = \cases{-1,      & if $x = t_0$;\cr
+                      |a| = 1, & if $x = t_1$.}
+    \stopnathequation
+
+  Both paths accept the input string, yet the tag||value function $v_1$ will be
+  different, depending on which path we choose.
+\stopexample
+
+As an aside, \TNFAs\ may be used for submatch addressing as stated in the
+outset of this subsection, but may also be used for approximate matching using
+regular expressions.  Laurikari shows in \cite[Laurikari01]\ a way in which
+this can be done.  This turns out to be a much simpler and possibly more
+efficient to achieve approximate matching than previous attempts, such as those
+used in \Command{agrep} \cite[Wu92].  Other alternatives for doing approximate
+matching using regular expressions are discussed in
+\cite[Araujo97,BaezaYates98,Baba02,BaezaYates92,Navarro01].  See any of these
+papers for a further discussion on the concept of approximate matching.
+
+\subsection{The size of a finite automaton is a function of the number of
+states in it.}
+
+Finally, just as we needed a way to denote the length of a regular expression
+(\indefinition[length of a regular expression]) for later discussions on
+asymptotical behavior of finite automata, we need a way to denote the size of
+a finite automaton.  Continuing a fine tradition, we’ll let $|A|$, for an
+automaton $A$, denote its size|/|length.
+
+\startdefinition
+  The size of a finite automaton $A$, denoted $|A|$, is the number of states in
+  $A$, or simply the size of the set $S$ of $A$; that is, $|A| = |S|$.
+\stopdefinition
+
+
+\section
+  [character sets]
+  {Character Sets}
+
+To continue our discussion on regular expressions in the next chapter, titled
+\about[the real world], we first need to define the notion of a character set.
+A \DefineTerm{character set} is a mapping between integral values and some
+alphabet; most often used for computationally related tasks, such as
+maintaining textual data in a computer.
+
+Note, however, that the bytes that make up a file on a file||system in a
+computer don’t necessarily map directly onto a specific character set.  Rather
+they make up some form of encoding that in turn maps a sequence of bytes onto a
+given character set.
+
+\placetable
+  []
+  [table:ascii]
+  {The \ASCII\ character set.}
+  \starttable[|r|c|c|c|c|c|c|c|c|]
+  \NC $+$ \VL[3] 0 \NC 1 \NC 2 \NC 3 \NC 4 \NC 5 \NC 6 \NC 7 \VL[3]\AR
+  \HL[3]
+  \NC   0 \VL[3] {\tt NUL} \VC {\tt SOH} \VC {\tt STX} \VC {\tt ETX}
+          \VC    {\tt EOT} \VC {\tt ENQ} \VC {\tt ACK} \VC {\tt BEL} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC   8 \VL[3] {\tt BS}  \VC {\tt HT}  \VC {\tt LF}  \VC {\tt VT}
+          \VC    {\tt FF}  \VC {\tt CR}  \VC {\tt SO}  \VC {\tt SI}  \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  16 \VL[3] {\tt DLE} \VC {\tt DC1} \VC {\tt DC2} \VC {\tt DC3}
+          \VC    {\tt DC4} \VC {\tt NAK} \VC {\tt SYN} \VC {\tt ETB} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  24 \VL[3] {\tt CAN} \VC {\tt EM}  \VC {\tt SUB} \VC {\tt ESC}
+          \VC    {\tt FS}  \VC {\tt GS}  \VC {\tt RS}  \VC {\tt US}  \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  32 \VL[3] \type{ }  \VC \type{!}  \VC \type{"}  \VC \type{#}
+          \VC    \type{$}  \VC \type{%}  \VC \type{&}  \VC \type{'} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  40 \VL[3] \type{(}  \VC \type{)}  \VC \type{*}  \VC \type{+}
+          \VC    \type{,}  \VC \type{-}  \VC \type{.}  \VC \type{/} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  48 \VL[3] \type{0}  \VC \type{1}  \VC \type{2}  \VC \type{3}
+          \VC    \type{4}  \VC \type{5}  \VC \type{6}  \VC \type{7} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  56 \VL[3] \type{8}  \VC \type{9}  \VC \type{:}  \VC \type{;}
+          \VC    \type{<}  \VC \type{=}  \VC \type{>}  \VC \type{?} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  64 \VL[3] \type{@}  \VC \type{A}  \VC \type{B}  \VC \type{C}
+          \VC    \type{D}  \VC \type{E}  \VC \type{F}  \VC \type{G} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  72 \VL[3] \type{H}  \VC \type{I}  \VC \type{J}  \VC \type{K}
+          \VC    \type{L}  \VC \type{M}  \VC \type{N}  \VC \type{O} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  80 \VL[3] \type{P}  \VC \type{Q}  \VC \type{R}  \VC \type{S}
+          \VC    \type{T}  \VC \type{U}  \VC \type{V}  \VC \type{W} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  88 \VL[3] \type{X}  \VC \type{Y}  \VC \type{Z}  \VC \type{[}
+          \VC    \type{\}  \VC \type{]}  \VC \type{^}  \VC \type{_}\VL[3]\AR
+  \DC\DL[8]\DR
+  \NC  96 \VL[3] \type{`}  \VC \type{a}  \VC \type{b}  \VC \type{c}
+          \VC    \type{d}  \VC \type{e}  \VC \type{f}  \VC \type{g} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC 104 \VL[3] \type{h}  \VC \type{i}  \VC \type{j}  \VC \type{k}
+          \VC    \type{l}  \VC \type{m}  \VC \type{n}  \VC \type{o} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC 112 \VL[3] \type{p}  \VC \type{q}  \VC \type{r}  \VC \type{s}
+          \VC    \type{t}  \VC \type{u}  \VC \type{v}  \VC \type{w} \VL[3]\AR
+  \DC\DL[8]\DR
+  \NC 120 \VL[3] \type{x}  \VC \type{y}  \VC \type{z}  \VC \tttf\leftargument
+          \VC    \type{|} \VC \tttf\rightargument \VC \type{~} \VC {\tt DEL}\VL[3]\AR
+  \HL[3]
+  \stoptable
+
+Perhaps the two most well known character sets are \ASCII\
+\cite[ASCII63,ASCII65,ASCII67]\ and \Unicode\ \cite[UNICODE03].
+
+\ASCII\ is one of the oldest character sets still in wide use and it covers
+most of the characters one would find in a text written in the target language:
+English.  The set is made up of 128 characters and is visualized in
+\intable[table:ascii].  Its size is such since it can then easily be mapped
+onto a computer byte by using the seven least significant bits of a byte which
+makes it very easy to process using any modern computer.
+\infigure[figure:ascii character set lookup] shows an example lookup of input
+$65$.  The problem with \ASCII\ is that not all text is written using the
+English, Latin||based, alphabet plus some western punctuation and numerals.
+Furthermore, 32 of the characters (the first 31 and the 128th) are not actually
+characters at all, rather they are what is known as \DefineTerm{control
+characters}.  They normally don’t produce any output on a computer screen.
+Instead they are processed by the computer to various ends.  Originally
+designed to be used for controlling the tele-types of the time, most of these
+character codes have become obsolete and only a handful are still used in
+normal data, such as {\tt HT} (\CharacterName{Horizontal Tabulation}) and {\tt
+LF} (\CharacterName{Line Feed}).
+
+However, \ASCII\ was never alone as the character set of computers, and at the
+end of the 1980s the need for a universal character set had become obvious.
+With the plethora of different character sets|<|most of them extensions on
+\ASCII, using the remaining 128 code points available using all eight
+bits|>|and encodings had made the situation practically unmanageable for anyone
+who wanted to deal with more than a few different sets.
+
+\placefigure
+  []
+  [figure:ascii character set lookup]
+  {Lookup in the \ASCII\ character set}
+  {\externalfigure[definitions:ascii character set lookup]}
+
+The solution was to create a new all||encompassing character set: \Unicode.  
+
+% TODO: make below footnote apparent
+
+\index[Unicode]{\Unicode}\Unicode\ was designed specifically to fill this need.
+\Unicode\ is in fact a large standard that defines much more than the actual
+characters that constitute its character set.  However, we only really care
+about its characters in this paper and thus we will use the term
+\Unicode\ rather loosely to mean the character set.  \Unicode\footnote{Which
+has now been mentioned by name {\em 4 times} in this paragraph\dots} reserves
+over a million\footnote{\digits{1,114,112} in fact, or 10FFFF$_{16}$ in
+hexadecimal, or $2^{20} + 2^{16}$ in powers of two (for reasons that will
+perhaps become apparent after reading the section on character encodings
+(\in[character encodings]))} \Term{code points} (\SeeSection[code points] for
+the definition of code point), and, with version 4.0, assigns \digits{96,382}
+of them to characters and other symbols|<|such as punctuation and
+numerals|>|from most of the world’s languages, both past and present.  There is
+also room for musical notation symbols and other less often used symbols which
+have in the past been hard to access from a computer.
+
+Since the advent of \Unicode\ as a more or less universally used standard in
+computer text processing, a lot of the issues related to different character
+sets and encoding forms have begun to disappear.  There are, however, a number
+of issues that have arisen over time.  Some are of a technical nature (although
+none of them are a show||stopper), and some are political.
+
+
+\section
+  [code points]
+  {Code Points}
+
+This short section defines the term \Term{code point}, but first we’ll show a
+notational convention that we will be using that is also used in the \Unicode\
+Standard.  A code point may be expressed as \CodePoint{$n$}, where $n$ is
+expressed as four to six hexadecimal digits, using $0$ through $9$ and the
+uppercase letters A through F for values $0$ through $15$.  Furthermore, the
+name of the character belonging to a given code point is set in small capitals.
+\intable[table:code points] show a couple of code points, their character
+names, and the character they represent.
+
+\placetable
+  []
+  [table:code points]
+  {Code points, their character names, and the character they map to.}
+  \starttable[|l|l|c|]
+  \HL
+  \NC \bf Code Point    \NC \bf Character Name                        \NC \bf Character     \NC\AR
+  \HL
+  \NC \CodePoint{0033}  \NC \CharacterName{western digit three}       \NC \Symbol{3}        \NC\AR
+  \NC \CodePoint{0061}  \NC \CharacterName{latin small letter a}      \NC \Symbol{a}        \NC\AR
+  \NC \CodePoint{03B8}  \NC \CharacterName{greek small letter omega}  \NC \Symbol{$\omega$} \NC\AR
+  \HL
+  \stoptable
+
+Now, a \DefineTerm{code point} is simply a fancy name for a slot in a character
+set.  Thus, the code point for \CharacterName{latin capital letter a}, or
+‘A’, is \CodePoint{0041} ($65_{10} = 41_{16}$) as we can verify by looking at
+\intable[table:ascii].  We define a mathematical function that, given a
+character in the \Unicode\ character set, gives that characters code point:
+
+  \placeformula[formula:codepoint]
+    \[\Fcodepoint\colon \text{\Unicode} → \naturalnumbers.\]
+
+\section
+  [character encodings]
+  {Character Encodings}
+
+It’s not enough simply to have a character set, you have to map values
+stored in a computer onto it as well.  This mapping from a sequence of bits
+onto a code point in a character set (which in turn maps onto a character) is
+known as a \DefineTerm{character encoding form} or the shorter|<|but sometimes
+ambiguous|>|\DefineTerm{character encoding}.  
+
+\placeintermezzo
+  {Character encoding forms and schemes.}
+  \startframedtext
+    The reason that the term “character encoding” is ambiguous is that while we
+    usually speak of a character encoding form, there’s also something known as
+    a \DefineTerm{character encoding scheme}.  The difference between an
+    encoding form and an encoding scheme is that the scheme includes
+    information about the byte||ordering of the sequences of bits to be mapped
+    onto its associated character encoding form.  We won’t be discussing
+    character encoding schemes any further, as they aren’t relevant to our
+    discussion.  More information about this and other subjects relating to
+    character handing in computers|<|especially those relating to
+    \Unicode|>|can be found in \cite[UNICODE03].
+  \stopframedtext
+
+The \ASCII\ character set discussed in \insection[character sets] is in fact
+also a character encoding, as there is a one||to||one mapping from a
+byte|<|consisting of eight bits|>|onto its corresponding code point.  Thus the
+byte $01100001_2$ is interpreted as the decimal value $97$, which is then
+mapped onto the \CharacterName{latin small letter a}, ‘a’.
+
+For \Unicode\ the situation is a bit more complex.  The reason being that
+representing all values in the range 0 to 10FFFF$_{16}$ requires at least three
+bytes.  (Actually, only 21 bits are necessary, but we always work in multiples
+of eight, the size of a byte in almost all modern computer architectures).
+This may not seem like a problem at first; all we need to do is deal with four
+bytes instead of one.  There is in fact an encoding that works in this way,
+known as \UTF--32.  The problem with this solution, however, is that this
+requires four times the space of using the \ASCII\ character set.  This may be
+fine while processing textual data, but it’s often a great waste when storing
+it, as most texts don’t require the full range of characters provided by
+\Unicode.  More on this later.
+
+There are three major character encodings for \Unicode\ in use today, namely
+\UTF--8, \UTF--16, and \UTF--32.  They all have different strengths and
+weaknesses and are therefore more or less equally useful in the large.  We will
+discuss each separately, listing design goals, advantages, and disadvantages,
+without going into the more technical details, leaving this up to the
+associated standards instead.
+
+\subsection{\UTF||8: a way of keeping backwards compatibility with \ASCII,
+while providing the full range of \Unicode.}
+
+\UTF||8 \cite[UNICODE03,RFC3629]\ is a variable||length character encoding form
+for \Unicode\ conceived by \Name{Rob}{Pike}\footnote{Yes, the same
+\Name{Rob}{Pike} that wrote the text editor \SAM.} and
+\Name{Ken}{Thompson}\footnote{Yes, the same \Name{Ken}{Thompson} that brought
+regular expressions to computing.} on a place||mat in a diner and later
+incorporated into the \Unicode\ Standard \cite[PikeThompson93].  The design
+goal of \UTF||8 was to create a character encoding form that would be backwards
+compatible with the \ASCII\ textual representation.  This was achieved by using
+bytes as the smallest unit of information for processing and storage, plus
+letting bytes $00000000_{2}$ (0) through $01111111_{2}$ (127) represent
+themselves, so that every valid \ASCII||encoded byte is also a valid \UTF||8||
+encoded byte.
+
+The containment of \ASCII\ is by far its strongest point, but there are many
+other advantages to \UTF--8 as well.  We list the most prominent ones here:
+
+\startpropertylist
+  \sym{$+$} Since it only deals in bytes, there is no need to worry about
+    byte||ordering as there is with \UTF--16 and \UTF--32 described in the
+    following two subsections; a sequence of bytes has only one interpretation
+    in \UTF--8 and is never part of a longer sequence for another character
+    encoding as is the case for some legacy encodings (such as \SJIS\
+    \cite[JIS90]).
+
+  \sym{$+$} It is space efficient for most Western scripts, especially for text
+    limited to the \ASCII\ character set as there will be no increase in size
+    for such text.
+
+  \sym{$+$} The first byte of a multi||byte sequence contains enough
+    information to determine the length of the sequence which makes it easy to
+    parse.
+
+  \sym{$+$} It is easy to synchronize a stream of \UTF--8 encoded text, as it
+    is easy to determine starting points of multi||byte sequences.
+
+  \sym{$+$} A lot of software will still deal with \UTF--8 encoded text as well
+    as it did with \ASCII\ encoded text, since the text is still only a stream
+    of bytes.  For example, the \UNIX\ command \Command{cat}
+    \cite[McIlroy86,POSIX92]\ will work without modification, as will
+    \Command{grep} \cite[McIlroy86,POSIX92]\ and many other standard utilities.
+\stopitemize
+
+There are, of course, some disadvantages to \UTF||8, as with all of the
+character encoding forms for \Unicode:
+
+\startpropertylist
+  \sym{$-$} Although space efficient for a lot of scripts, it is extremely
+    wasteful in encoding scripts such as Kanji and other Eastern scripts, where
+    a single ideograph may require as many as six bytes to represent.  Thus,
+    \UTF||8 isn’t well suited for dealing with text using these scripts and
+    \UTF||16 or \UTF||32 are to be preferred.
+
+  \sym{$-$} Being variable||length, processing \UTF||8 encoded text can be
+    rather time consuming, as there are quite a few calculations to be made.
+\stoppropertylist
+
+% TODO: this will only be added if additional time is found somewhere along the
+% way.
+%
+%\placetable
+%  []
+%  [table:ucs-4 to utf-8]
+%  {Encoding \Unicode\ character points using \UTF--8}
+%  \starttable[|l|l|]
+%    \HL
+%    \NC \bf Character Point Range \NC \bf \UTF--8 Representation (binary) \NC\AR
+%    \HL 
+%    \NC $0000\,0000_{16}$--${\tttf 0000\,007F}_{16}$ \NC $0bbbbbbb$ \NC\AR
+%    \NC $0000\,0080_{16}$--$0000\,{\rm 07FF}_{16}$ \NC $110bbbbb$ $10bbbbbb$ \NC\AR
+%    \NC $0000\,0800_{16}$--$0000\,{\rm FFFF}_{16}$ \NC $110bbbbb$ $10bbbbbb$ $10bbbbbb$ \NC\AR
+%    \NC $0001\,0000_{16}$--${\rm 001F}\,{\rm FFFF}_{16}$ \NC $110bbbbb$ $10bbbbbb \times 3$ \NC\AR
+%    \NC $0020\,0000_{16}$--${\rm 03FF}\,{\rm FFFF}_{16}$ \NC $110bbbbb$ $10bbbbbb \times 4$ \NC\AR
+%    \NC $0400\,0080_{16}$--${\rm 7FFF}\,{\rm FFFF}_{16}$ \NC $110bbbbb$ $10bbbbbb \times 5$ \NC\AR
+%    \HL
+%  \stoptable
+%
+\subsection{\UTF||16: using two bytes to represent most characters.}
+
+\UTF||16 \cite[UNICODE03,RFC2781]\ is the second of the three
+\Unicode\ Transformation Formats defined in the \Unicode\ Standard.  It
+represents the first \digits{65,536} code points as a sequence of two bytes
+(16--bit word), and code points above \digits{65,536} as a \Term{surrogate
+pair}.  A \DefineTerm{surrogate pair} is a pair of pairs of bytes, so that a
+surrogate pair is four bytes|<|or two 16-bit words|>|long.  Some code points
+among the first \digits{65,536} code points are reserved for representing the
+first two bytes of the surrogate pair which acts much like the first key in a
+two||level lookup table.  The second two bytes can then be seen as an index
+into the second level of the table.
+
+The main advantage of using \UTF||16 is that the first \digits{65,536} code
+points can be represented using only two bytes of information, which is space
+efficient for dealing with scripts within this range, where almost all the
+modern ones reside.
+
+The main disadvantage is that it requires additional processing for dealing
+with surrogate pairs and also that it’s byte order dependent.  There is,
+however, a convention, defined in the \Unicode\ Standard, that may be used to
+mark what byte order the text following the mark is in.  This mark is known as
+a \DefineTerm{Byte Order Mark}, or \BOM, and has the value \CodePoint{FEFF} for
+big||endian or \CodePoint{FFFE} for little||endian.
+
+\subsection{\UTF||32: straightforward mapping of four bytes to code point.}
+
+Finally, we come to the last of the three character encoding forms, \UTF||32
+\cite[UNICODE03].  It is by far the simplest method of encoding \Unicode\
+characters.  A code point is simply represented as four bytes (32||bit word)
+which is easily enough to represent all the code points reserved by the
+\Unicode\ Standard.  This means that text processing is very fast, as there is
+no extra overhead in converting byte sequences to code points.  However, as
+four bytes are enough to represent values far beyond those needed for \Unicode\
+it is very wasteful, space||wise.  \UTF||32 is mainly used for internal text
+processing in software and not for storing text on computer media.
+
+\stopcomponent

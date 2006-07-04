@@ -1,0 +1,430 @@
+\startenvironment include/layout
+
+\startsectionblockenvironment[frontpart]
+  \setuppagenumbering[conversion=romannumerals]
+\stopsectionblockenvironment
+
+\startsectionblockenvironment[bodypart]
+  \setuppagenumber[number=3]
+\stopsectionblockenvironment
+
+% TODO: is it better at none?
+\setupwhitespace[none]
+\setupindenting[medium]
+\setupspacing[broad]
+
+\installlanguage
+  [en]
+  [spacing=broad,
+   leftsentence={\hbox{~--~}},
+   rightsentence={\hbox{~--~}},
+   leftsubsentence={--},
+   rightsubsentence={--},
+   leftquote=\upperrightsinglesixquote,
+   rightquote=\upperrightsingleninequote,
+   leftquotation=\upperrightdoublesixquote,
+   rightquotation=\upperrightdoubleninequote,
+   date={month,\ ,day,{,\ },year},
+   state=stop]
+
+\mainlanguage
+  [en]
+
+\setuppagenumbering[alternative=doublesided,location=]
+%\setupheads[alternative=inmargin]
+%\setuphead[chapter][style=\bfc]
+%\setuphead[section][style=\bfb]
+%\setuphead[subsection][style=\bfa]
+
+\setupcaptions[width=\textwidth,align=middle]
+
+\setupcolors[state=start]
+%\definecolor[activetrans][r=.1, g=.5, b=.8]
+%\definecolor[activetrans][r=1, g=.6, b=.6]
+%\definecolor[activetrans][r=.6, g=.8, b=1]
+\definecolor[activetrans][r=.286275,g=.729412,b=.25098]
+\definecolor[activestate][activetrans]
+% XXX: use this for various titles and such.
+\definecolor[titlecolor][r=.388235,g=.541176,b=.686274]
+\definecolor[titlegraphic][r=.8,g=.8,b=.8]
+
+
+\setuphyphenmark
+  [sign={-}]
+
+%\starttypescript [serif] [default] [size]
+%  \definebodyfont
+%  [4pt,5pt,6pt,7pt,8pt,9pt,9.5pt,10pt,11pt,12pt,14.4pt,20.7pt]
+%  [rm] [default]
+%\stoptypescript
+
+
+% TODO: enable when producing screen document
+%\setupinteraction
+%  [state=start]
+
+% TODO: choose one...
+%\usetypescript[fourier][ec]
+%\setupbodyfont[fourier]
+%\usetypescript[ant][ec]
+%\setupbodyfont[ant]
+%\usetypescript[palatino][ec]
+%\setupbodyfont[palatino]
+
+%\usetypescript [modern][\defaultencoding]
+
+\definetypeface[boldmath][mm][boldmath][computer-modern][computer-modern][encoding=default]
+
+%\setupbodyfont[modern]
+
+
+\setuppublications[alternative=weibull]
+
+\setupsynonyms
+  [abbreviation]
+  [textstyle=smallcaps,
+   criterium=all]
+
+% TODO: 
+\setupcapitals
+  [title=yes,
+   sc=yes]
+
+\setupformulas[way=bychapter]
+
+\setupcombinedlist
+  [content]
+  [alternative=a,
+   interaction=all,
+   level=section]
+
+\setuplist
+  [chapter]
+  [numbercolor=red,
+   style=bold] % numberstyle=mediaeval,
+
+\setuplist
+  [section]
+  [alternative=d,
+   margin=2em,
+   pagestyle=slanted]
+%  [alternative=b,before=\blank,after={\vskip.7\baselineskip},style=bold]
+
+%\setuplist
+%  [section,subsection]
+%  [margin=2em,distance=2em]
+
+\startuniqueMPgraphic{FootnoteRule}{amplitude,color}
+  numeric amp; amp := \MPvar{amplitude};
+  vardef sine(expr x) =
+    amp * sind(x * ((3.14159 * 2) / 5) * (360 / (3.14 * 2)))
+  enddef;
+  def sinewave(expr cycles) =
+    ( origin{curl 0}
+      for x = 1 upto (cycles * 5 - 1):
+        .. (x,sine(x))
+      endfor
+      .. {curl 0}((cycles * 5),sine(cycles * 5)) )
+  enddef;
+  draw sinewave(20) scaled 1pt withcolor \MPvar{color};
+\stopuniqueMPgraphic
+
+\setupMPvariables
+  [FootnoteRule]
+  [amplitude=0.5,
+   color=titlecolor]
+
+\def\FootnoteRule%
+  {\strut\reuseMPgraphic{FootnoteRule}\vskip0pt}
+
+%\def\FootNoteLine%
+%  {\strut\vrule height .4pt depth 0pt width 9.25pc
+%   \vskip0pt}
+
+\setupfootnotes
+  [rule=\FootnoteRule,
+   before=\blank,
+   way=bychapter]
+
+\definetext[chapter][footer][pagenumber]
+% TODO: is this better than setting header=high?
+\definetext[chapter][header][]
+\setuphead[chapter][header=chapter,footer=chapter,page=right,prefix=+]
+
+\setupheadertexts
+  [section][pagenumber]
+  [pagenumber][chapter]
+
+\setupregister
+  [index]
+  [indicator=no]
+
+\definecolor[lightgray][s=.96]
+
+\setupframedtexts
+  [background=color,
+   backgroundcolor=lightgray,
+   frame=off,
+   rightframe=on,
+   framecolor=titlecolor,
+   rulethickness=3pt]
+% TODO: anna
+%   framecolor=darkgreen,
+
+\setupurl
+  [color=blue]
+
+\setuptyping
+  [file]
+  [numbering=line]
+
+\defineframedtext
+  [shellsessionframe]
+  [background=color,
+   backgroundcolor=lightgray,
+   frame=off,
+   width=broad]
+\setuptyping
+  [shellsession]
+  [before=\startshellsessionframe,
+   after=\stopshellsessionframe]
+
+% TODO: how about indentext here?
+\setuptyping
+  [C]
+  [bodyfont=10pt,
+   indentnext=no]
+
+\definetyping[Ruby]
+\setuptyping
+  [Ruby]
+  [bodyfont=10pt,
+   indentnext=no]
+
+\setupFLOWshapes[background=color,backgroundcolor=lightgray]
+
+\setupitemgroups
+  [indentnext=no,
+   headstyle=bold]
+
+\defineitemgroup
+  [propertylist]
+
+\setuppropertylist
+  [each]
+  [packed]
+  [symcolor=titlecolor]
+
+\defineitemgroup
+  [enumerate]
+
+\setupenumerate
+  [each]
+  [m,packed]
+  [placestopper=no]
+
+\setupenumerate
+  [1]
+  [m,packed,inmargin]
+
+\setupitemize
+  [each]
+  [packed]
+
+\setupitemize
+  [1]
+  [inmargin,packed]
+
+%\setupitemize
+%  [each]
+%  [inmargin,packed]
+%  [symcolor=titlecolor]
+%
+%\setupitemize
+%  [1]
+%  [inmargin,packed]
+%
+%\setupitemize
+%  [2]
+%  [inmargin,packed]
+
+\definesymbol[1][{\color[titlecolor]{\mathematics{\cdot}}}]
+\definesymbol[2][{\color[titlecolor]{\symbol[dash]}}]
+
+\setupalgorithmio
+  [each]
+  [5*broad,
+   packed]
+  [symstyle=slanted]
+
+\setupfloats
+  [indentnext=no]
+
+\setupcaptions
+  [headstyle=\bf\x,
+   style=\x]
+
+\setupcaption
+  [describedfigure]
+  [align=right]
+
+\setupformulas
+  [indentnext=no]
+
+\setupdescriptions
+  [notation,
+   definition]
+  [indentnext=no]
+
+\setdigitmode 4
+\digittemplate 1,000,000.00
+
+\unexpanded\def\dodowncase{\lowercase}
+
+\definelayer
+  [dedication]
+  [width=\makeupwidth,
+   height=\textheight]
+
+\setlayerframed
+  [dedication]
+  [x=\makeupwidth,
+   y={.5\textheight},
+   location={left,bottom}]
+  [frame=off,
+   offset=none,
+   align={right,lohi}]
+  {\hbox to \hsize {\hss\ss\sl You know who you are: Thanks}\space}
+
+\setuphead
+  [chapter]
+  [placehead=empty,
+   header=chapter,
+   style=\scb, % BUG: should be textstyle
+   textcommand=\dodowncase,
+   numberstyle=mediaeval]
+
+\definetext
+  [chapter]
+  [header]
+  [\setups{chapter}]
+  []
+
+\startsetups chapter
+  \setups[chapter:title]
+  \setups[chapter:number]
+  \setups[chapter:finish]
+\stopsetups
+
+\definelayer
+  [chapter]
+  [width=\dimexpr(\makeupwidth+\cutspace),
+   height=\headerheight]
+
+\startsetups chapter:title
+  \setlayerframed
+    [chapter]
+    [x=\dimexpr(\makeupwidth),%+\cutspace),
+     location={left,bottom}]
+    [height=\headerheight,
+     foregroundcolor=black,
+     frame=off,
+     offset=none,
+     align={right,lohi}]
+    {\hbox to \hsize % spread .5\cutspace
+       {\hss
+        \doiftextelse{\placeheadtext[chapter]}%
+          {\placeheadtext[chapter]}%
+          {\placeheadtext[title]}
+        \hss}\space
+     \vskip.5cm\hrule}% \hrule
+\stopsetups
+
+\startsetups chapter:number
+  \setlayerframed
+    [chapter]
+    [x=\dimexpr(\makeupwidth+\cutspace),
+     y=\vsize,
+     location={left,bottom}]
+    [width=\dimexpr(\cutspace-\rightmargindistance),
+     height=\dimexpr(\cutspace-\rightmargindistance),
+     foregroundcolor=titlecolor,
+%     background=color,
+%     backgroundcolor=gray,
+     frame=off,
+     offset=none,
+     align={middle,lohi}]
+    {\hbox to \hsize
+       {\hss
+        \doifmode{*bodypart}
+          {\NormalizeFontWidth
+           \NumberFont
+           {8}
+           {\dimexpr(\hsize-1.6cm)\relax}
+           {RegularBold}
+           \NumberFont\headnumber[chapter]}%
+%           \bfd\setupinterlinespace%
+%           \ss\headnumber[chapter]}% % use \headnumber[chapter]
+        \hss}}
+\stopsetups
+
+\startsetups chapter:finish
+  \framed
+    [width=\makeupwidth,
+     height=\headerheight,
+     background=chapter,
+     frame=off]
+    {}
+\stopsetups
+
+%   textcommand=\dodowncase,
+\setuphead
+  [section]
+  [style=smallcaps,%{\setsmallbodyfont\sc},
+%   numberstyle={\setsmallbodyfont},
+   before=\blank,
+   color=titlecolor,
+   textcommand=\dodowncase,
+   after=\blank]
+
+% TODO: what do we use?
+\def\SubSectionCommand#1#2%
+  {\vbox{#1\quad#2}}
+\setuphead
+  [subsection]
+  [style=slanted,
+   textcommand=,
+% textstyle={\setsmallbodyfont\sl},
+   numberstyle=normal,
+   color=titlecolor,
+   before=\blank,
+   after=\blank,
+   command=\SubSectionCommand]
+
+%\starttypescript [map] [latin-modern-os] [ec,texnansi,qx,t5,pl0,il2]
+%  \loadmapfile[\typescriptthree-os-public-lm.map]
+%\stoptypescript
+%\usetypescript [modern][\defaultencoding]
+%\usetypescript [map] [latin-modern-os] [\defaultencoding]
+%
+%\setupbodyfont
+%  [modern]
+
+% HACK: a bad hack to get numbers in headers to display in mediaeval
+\def\Mydoseparatednumber#1.#2%
+  {{\os #1}%
+   \ifx#2\empty
+     \expandafter\gobbleuntilrelax
+   \else \numberseparator
+     \expandafter\Mydoseparatednumber
+   \fi{\os #2}}
+
+\def\Myseparatednumber  #1{\Mydoseparatednumber  #1.\empty\relax}
+\def\dohandleheadnumber#1%
+  {\expanded{\Myseparatednumber{#1}}}
+
+%\usetypescript [modern][texnansi]
+%\loadmapfile[texnansi-oslftt-public-lm]
+%\setupbodyfont[modern]
+
+\stopenvironment

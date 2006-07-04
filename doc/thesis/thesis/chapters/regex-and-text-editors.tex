@@ -1,0 +1,483 @@
+\startcomponent thesis/chapters/regex-and-text-editors
+
+\project masters-project
+\product thesis
+
+\chapter
+  [regexes in text editors]
+  {Using Regular Expressions in Text Editors}
+
+
+The outset of this manuscript was to introduce the theoretical foundations for
+regular expressions and text editors.  Another goal was to look at the
+connection between the two, and specifically how regular expressions can be
+used effectively in a text editor.  We’ll be looking at the command||sets of
+two editors, \Vim\ \cite[Moolenaar02,Oualline01]\ and \SAM\ \cite[Pike87].
+These are both solid editors that use regular expressions for more tasks than
+most.  
+
+This chapter will look especially at the parts of the command sets of either
+editor that relate to regular expressions.  We’ll try to identify (1) what
+commands are useful to the user but also any problems that these commands may
+suffer in their current form and (2) commands that seem to be missing.  Once we
+have gathered this information we’ll design a command set for our new editor
+that will be the center of attention from now on in this manuscript, named
+\NED.
+
+As already stated, two editors will be investigated, namely \Vim\ and \SAM.
+The reasons for choosing \Vim\ are many:  it has a long history and uses a lot
+of the same ideas that were present in its predecessors, such as \Qed, \ED, and
+\VI;  its use of regular expressions is almost ubiquitous throughout the
+editor.  \Vim\ is also a very popular editor, e.g., see \cite[LJ127], making it
+a good choice for investigation.
+
+When the developers of \PlanNine\ needed a new editor for their operating
+system, \SAM\ was the result \cite[Pike95].  It was an attempt at creating a
+better version of \ED, \VI, and \JIM, much as \PlanNine\ itself was an attempt
+at a better \UNIX.  It, as its predecessors, had a command||set that was
+designed around the application of regular expressions for performing textual
+transformations.  It did, however, introduce a lot of new ideas, trying to free
+itself from some of the restrictions that had been imposed by earlier editors.
+
+The discussion assumes some knowledge the syntax of \Vim’s regular expressions.
+\inappendix[vim regular expression syntax]\ contains a complete reference to
+\Vim's regular expression syntax, for those unfamiliar with it.  Examples have,
+however, been designed so as to introduce as few new concepts as possible, so
+by all means do read on.  If you have access to \Vim\ or \SAM\ you may want to
+run these editors alongside reading this manuscript to see the effects of the
+commands that we’re about to introduce “live” so to speak.  Doing helps
+learning, as they say.
+
+% TODO: describe this chapter's composition
+% This chapter begins by introducing the command set of \Vim.
+
+
+\section{Search Commands}
+
+\Vim\ allows users to express search patterns using regular expressions.  The
+search command is named \type{/} and takes a regular expression as its
+only parameter:
+
+\starteditorinput
+\type{/}\<pattern>
+\stopeditorinput
+
+An example of the search command is displayed in \infigure[vim:search-1] where
+the user has entered a search for the word “sentence” on the command input line
+at the bottom of the display.  The command typed was \KbdType{/ \ < s e n t e n
+c e \ >}.  (Please see \inchapter[vim regular expression syntax] for the
+meaning of the surrounding \TypedRegex{\<...\>}.)
+
+The matching word is highlighted while the user is still entering the regular
+expression, making it easy to track what text matches the pattern.  Once
+the search is ended, by pressing \KbdKey{Enter}, point is placed at the
+beginning of the matched text~--~\infigure[vim:search-2].  (The black rectangle
+is now display using reverse||video, to make it easier to read the text beneath
+it.)  In addition, all matches have now been highlighted to make it easier to
+see where other matches to the search||pattern are.
+
+\placefigure
+  []
+  [vim:search-1]
+  {Entering a search pattern in \Vim.}
+  {\externalfigure[vim:search-1]}
+
+\placefigure
+  []
+  [vim:search-2]
+  {Displaying matches to a pattern in \Vim.}
+  {\externalfigure[vim:search-2]}
+
+Invoking the search command is done in the same fashion in \SAM\ as in \Vim.
+
+\section{Movement Commands}
+
+Related to search commands are movement commands, as a search moves point to a
+new position in the buffer where a match was found.  As \Vim\ treats search
+commands as movement commands we may use them to do complex edits.  We may, for
+example, use the delete command \type{d} together with a search command to
+delete from point to the end of the current sentence.  The \type{d} command is
+defined as follows:
+
+\starteditorinput
+\type{d}\<motion command>
+\stopeditorinput
+
+A \<motion command> is a command that moves point in some way.  The \type{/}
+command fits this description.
+
+Let us issue a delete command, using a search as the \<motion command>
+argument.  \infigure[vim:movement-1] is the state the buffer is in before the
+command is executed.  The complete command that is then executed is \KbdType{d
+/ [ . !  ? ] \ s \ +}\KbdKey{Enter}.
+
+\placefigure
+  []
+  [vim:movement-1]
+  {Using search together with delete (before).}
+  {\externalfigure[vim:movement-1]}
+
+After the delete||using||search command is executed, the buffer will be as in
+\infigure[vim:movement-2].  All text up to the matched text has been deleted.
+Thus our sentence that was too long\footnote{Or perhaps it was just fine in
+length, thus making the comment at the end of it redundant} is now just right.
+
+\placefigure
+  []
+  [vim:movement-2]
+  {Using search together with delete (after).}
+  {\externalfigure[vim:movement-2]}
+
+{\SAM}s command||set doesn’t include any commands that take a \<motion> as an
+argument, thus this discussion doesn't apply to it.
+
+
+\section{Addressing Commands}
+
+Commands in \Vim\ may be directed to only address a certain set of lines in the
+buffer.  The addressing is done by giving a continuous range of lines, where
+each end||point is defined by a \DefineTerm{line||number specification}.  Such
+a specification may be given in many different ways, but it’s enough for our
+discussion to known that it’s given by a pair of {\em addresses}, separated by
+commas (,):
+
+\startbnfgrammar[]
+  <line-number specification>: <address> | <address> "," <address>
+\stopbnfgrammar
+
+We actually allows ranges to span only one line and in this case specifying a
+sole address suffices.
+
+An \DefineTerm{address} is either (a) a number, representing the line with that
+line||number; (b) a relative number, representing a line with a line||number
+relative to the current number; or (c) a pattern, representing the line||number
+of the next line that contains a match of that pattern:
+
+\startbnfgrammar[]
+  <address>: <number> | <relative number> | "/" <pattern> "/"
+  <relative number>: "+" <number> | "-" <number>
+\stopbnfgrammar
+
+If we would like to delete the next empty line and the two lines following it,
+we may give the delete command a line||number specification that will match
+this specification.  The exact expression for this range is
+
+\starteditorinput
+\type{/^$/,+2}
+\stopeditorinput
+
+A command is given a range by invoking them from the \DefineTerm{command line}.
+This is done by executing the colon (\type{:}) command.  Following the colon is
+the line||number specification and then the name of the command to execute:
+
+\starteditorinput
+\type{:}\<line||number specification>\<command>
+\stopeditorinput
+
+The buffer before the edit we are about to perform is shown in
+\infigure[vim:addressing-1].
+
+\placefigure
+  []
+  [vim:addressing-1]
+  {Addressing the delete command (before).}
+  {\externalfigure[vim:addressing-1]}
+
+The command to be executed is thus \KbdType{: / ^ $ / , + 2 d}\KbdKey{Enter}.
+The addressed command is invoked by the colon (\type{:}) command.  The colon is
+followed by the line||number specification that was introduced above.  Finally,
+the \type{d} is still the name of the delete command, which completes our
+command.  \infigure[figure:vim:addressing-2]\ displays the state of the buffer
+after the command has been executed.
+
+\placefigure
+  []
+  [figure:vim:addressing-2]
+  {Addressing the delete command (after).}
+  {\externalfigure[vim:addressing-2]}
+
+Addressing commands works in much the same way in \SAM\ as in \Vim.
+
+
+\section
+  [repeating commands]
+  {Repeating Commands}
+
+% TODO: better to use pattern or regular expression in this chapter?
+\Vim\ provides means to repeat a given command an a set of lines containing
+matches of a pattern.  The meta||command that provides this functionality is
+known as the \type{g} command, for \quotation{global}.  Its definition is
+
+\starteditorinput
+\type{:g/}\<pattern>\type{/}\<command>
+\stopeditorinput
+
+The \type{g} command has many uses and we can in no way show you all.  We do
+however provide you with a global command that deletes all empty lines in the
+buffer.  We execute the global command \KbdType{: g / ^ $ / d}\KbdKey{Enter} on
+the buffer displayed in \infigure[figure:vim:repeating-1].  Again, the pattern
+given as an argument to the global command is delimited by slashes.  The
+command to execute on the lines chosen is the delete command \type{d}, which
+follows the pattern specification.
+
+\placefigure
+  []
+  [figure:vim:repeating-1]
+  {Repeating a command in \Vim\ using the \type{g} command (before).}
+  {\externalfigure[vim:repeating-1]}
+
+The resulting buffer is shown in \infigure[figure:vim:repeating-2].  
+
+\placefigure
+  []
+  [figure:vim:repeating-2]
+  {Repeating a command in \Vim\ using the \type{g} command (after).}
+  {\externalfigure[vim:repeating-2]}
+
+The repetition of commands is an area where \SAM\ finally begins to differ from
+\Vim\ and ancestors they have in common.  \SAM\ doesn’t have the \type{g}
+command.  Instead, \SAM\ has a much more flexible command called \type{x} for
+{\em extract}.  While the \type{g} command in \Vim\ only allows commands to
+operate on a per||line basis, the \type{x} command in \SAM\ allows commands to
+operate on a per||match basis.
+
+To anyone familiar with \UNIX\ tools in general, where almost everything is
+done on a per||line basis, this may seem odd and perhaps even controversial.
+Once you begin to understand the potential of per||match operation, however, it
+turns out that this opens up for a lot of new possibilities.
+
+To continue the discussion on repetition commands in \SAM, we must first
+introduce a new notion.  \SAM\ uses a much more flexible definition for
+point\footnote{point is actually known as \DefineTerm{dot} in the \SAM\
+documentation, but we’ll stick to using the same name we been using so far.}.
+The point in \SAM\ may not just be a position in the contents of the buffer,
+but a range.  We’ll, however, only redefine one of the operations that have
+previously been introduced, so as to match this ranged point\footnote{It’s of
+course a misnomer for a point to be a line, but we aren't discussing text
+editing from a geometric point of view.  See instead \cite[Miller99,Miller02]\
+for such a discussion.}.
+
+% TODO: how are ranges indexed?
+\startdefinition
+  The \DefineTerm{move||to operation} of the \SAM\ text editor moves point to a
+  new position in the buffer:
+
+  \startnathequation
+    \Fmoveto\colon \Buffers×\naturalnumbers → \Buffers, \\
+    \Fmoveto((w, p), ⟨q_0, q_1⟩) = (w, ⟨q_0', q_1'⟩),
+      \qquad \wall q_0' = \min(\min(q_0, q_1), |w| + 1), \\
+                   q_1' = \min(\max(q_0, q_1), |w| + 1). \return
+  \stopnathequation
+\stopdefinition
+
+Equipped with this advanced definition of point and \Fmoveto, we are able to
+explain how the \type{x} command operates.  The \type{x} command takes two
+arguments, a pattern and a command, and for each match of the pattern, it sets
+point to the matched portion of the buffer and executes command.  This command
+may in turn alter the contents of the buffer within point, or it may be another
+\type{x} command to do further extractions within the matched portion.
+
+The \type{x} command is thus invoked in the following manner:
+
+\starteditorinput
+\type{x/}\<pattern>\type{/}\<command>
+\stopeditorinput
+
+An example usage of the \type{x} command would be to change every instance of
+the word “acceptable” to “unacceptable”.  To do so we must first introduce
+another command available in \SAM, the insert command \type{i}:
+
+\starteditorinput
+\type{i/}\<text>\type{/}
+\stopeditorinput
+
+The \type{i} command inserts \<text> before point without changing it.  Thus,
+to swap charges from the positive to the negative, we execute the following
+command:
+
+\starteditorinput
+\type{x/acceptable/i/un/}
+\stopeditorinput
+
+\SAM\ has three more commands that relate to the \type{x} command: the
+\type{y}, \type{g}, and \type{v} commands.
+
+The \type{y} command in \SAM\ is like the \type{x} command, with the defining
+difference being that it matches between adjacent matches of its argument
+pattern:
+
+\starteditorinput
+\type{y/}\<pattern>\type{/}\<command>
+\stopeditorinput
+
+This can be useful in fixing our above example of the \type{x} command, where
+the word “unacceptable” will actually be changed to “ununacceptable”, which is
+quite unacceptable.  The solution is to use \type{y} to skip over the instances
+of the word \quotation{unacceptable}:
+
+\starteditorinput
+\type{y/unacceptable/x/acceptable/i/un/}
+\stopeditorinput
+
+Pretty darn neat.
+
+We mentioned earlier that there were commands named \type{g} and \type{v} as
+well.  These two commands are each others complement and they acts as guards
+for the command that has been given as an argument:
+
+\starteditorinput
+\type{g/}\<pattern>\type{/}\<command>
+\stopeditorinput
+
+The semantics of the \type{g} command is such that if the pattern matches
+within point, the given command will be executed.  The semantics of the
+\type{v} command is to do just the opposite, execute the command if the pattern
+doesn’t match within point.
+
+As an example, consider the file in \infigure[figure:pike bibliography].  Say
+that we wish to extract any bibliography entry that refers to \SAM\ itself.  A
+bibliography entry can be matched by the regular expression
+\TypedRegex/@[a-z]+{.*\n([^}].*\n)+}\n/.  That was perhaps a mouthful, so well
+go through it step||by||step.  The \TypedRegex/@[a-z]+{/ matches the beginning
+of the bibliography entry.  It’s then followed by some information that we
+don’t care much about, matched by \TypedRegex{.*\n} to the end of the line
+(\TypedRegex{\n} matches the end of a line).  This is followed by one or more
+non||empty lines that don’t begin with a curly brace (\type|}|), thus
+\TypedRegex/([^}].*\n)+/ fits the bill.  The bibliography entry ends with a
+line that only contains a single curly brace: \TypedRegex/}\n/.
+
+\placedescribedfigure
+  []
+  [figure:pike bibliography]
+  {A set of bibliography entries in \BIBTEX\ format \cite[Pataschnik88]\ taken
+   from a larger set due to \Name{Rob}{Pike}.}
+  {\typefile{../thesis/data/pike-bibliography.bib}}
+
+We can feed this to the \type{x} command and add a guard that check that the
+matched bibliography entry mentions \SAM\ in the title, before we display it
+using the \type{p} command:
+
+\starteditorinput
+\type:x/@[a-z]+{.*\n([^}].*\n)+}\n/g/  title = .*sam/p:
+\stopeditorinput
+
+We haven’t mentioned the \type{p} command yet, but there isn’t much to say
+about it.  It simply displays the contents of point, in this case being
+
+\starttyping
+@article{Pike87a,
+   author = {Rob Pike},
+   title = {The Text Editor sam},
+   journal = {Software - Practice and Experience},
+   volume = {17},
+   number = {11},
+   pages = {813--845},
+   month = nov,
+   year = {1987}
+}
+\stoptyping
+
+This concludes our discussion on repeating commands.  This topic is probably
+the hardest one to grasp of the ones introduced in this chapter, and to get a
+feel of how to use them effectively it’s probably best to sit down and run some
+interactive sessions with the editors.  Don’t let their potential power scare
+you off; instead harness it to achieve advanced textual transformations.
+
+
+\section{Substitution Command}
+
+One of the most useful commands in \Vim\ is the substitution command \type{s}.
+This command takes a pattern and a substitution specification as arguments and
+then searches for matches of the pattern.  Whenever a match is found, it’s
+substituted with what was given as the second argument.  This substitution
+specification can be rather advanced|<|one might even consider it a
+sub||language in itself, as it allows so many things to be done|>|but usually
+it’s simply another string to replace the match with.
+
+The definition of the \type{s} command is
+
+\starteditorinput
+\type{:s/}\<pattern>\type{/}\<substitution specification>\type{/}
+\stopeditorinput
+
+and the exact semantics of it is that it will search for matches to the given
+pattern within the current line, i.e., the line containing point, and replaces
+the first occurence with the given \<substitution specification>.  As
+previously stated, we won't give a complete grammar for this specification,
+only a partial one:
+
+\startbnfgrammar[]
+  <substitution specification>: <string>
+\stopbnfgrammar
+
+For a complete grammar and explanation, see
+\inbnfgrammar[vim regular expression syntax:grammar:substitution specification]
+and
+\intable[vim regular expression syntax:table:substitutions].
+
+As an example we would like to substitute misspellings of “acceptable” in the
+buffer displayed in \infigure[figure:vim:substitution-1].
+
+\placefigure
+  []
+  [figure:vim:substitution-1]
+  {Substituting a string in \Vim\ (before).}
+  {\externalfigure[vim:substitution-1]}
+
+The command executed is
+\KbdType{: s / a c c e p t i b l e / a c c e p t a b l e}\KbdKey{Enter}.  The
+pattern is separated from the replacement by a slash (\type{/}).  The resulting
+buffer can be seen in \infigure[figure:vim:substitution-2].
+
+\placefigure
+  []
+  [figure:vim:substitution-2]
+  {Substituting a string in \Vim\ (after).}
+  {\externalfigure[vim:substitution-2]}
+
+Remember: this is a very simple instance of the use of the \type{s} command.  A
+lot more advanced substitutions can be made with just a little more effort.
+
+\SAM\ has the \type{s} command with a similar syntax, but with different
+semantics.  In \SAM, \type{s} looks for a match to the pattern within the
+contents of point and substitutes it with the replacement string.  The \type{s}
+command isn’t as useful in \SAM\ as in \Vim, as there are other (often better)
+ways to achieve the same effect.  It’s included mostly for convenience, as
+predecessors to \SAM\ had this command, and it would seem strange to some not
+to have it available.
+
+% TODO: conclude this section
+
+\section
+  [problems]
+  {Problems, Solutions, and Conclusions}
+
+So, now that we have seen some of the commands in \Vim\ and \SAM\ that use
+regular expressions, it’s time to discuss some of the issues associated with
+these commands and their possible solutions.
+
+As the previous sections have shown, \Vim’s command set is very line||centric,
+where most commands work on a set of lines as the smallest unit.  This works
+well for many tasks, but it isn't unusual that one would like for commands to
+work on an arbitrary structure of the buffer.  Examples of this can be seen in
+the section on repeating commands (\insection[repeating commands]) where we
+defined our structure to be a \BIBTEX\ bibliography entry.  While this was a
+structure larger than a single line, we can think of instances where we would
+like to operate on smaller units than a line, e.g., to delete each occurrence
+of a word.  \SAM\ provides a very interesting solution to this problem.  It
+seems that the set of four commands, \type{x}, \type{y}, \type{g}, and
+\type{v}, associated with the repetition of commands, are enough to make the
+most daunting editing tasks simple to describe to the text editor.
+% TODO: have we shown this?
+
+The problem with \SAM\ is that it doesn’t go far enough.  While it solves
+problems with the command set, the use of regular expressions could still be
+made easier.  The main problem with regular expressions in either text editor
+is that their syntax is too cryptic, making it hard to express advanced
+instances of them.  This is the problem that we’ll solve in the next chapter,
+where we introduce a new regular expression syntax that will make it easier for
+the user to create a set of often used regular expressions for easy reuse.
+
+% TODO: further discuss other problems
+
+\stopcomponent

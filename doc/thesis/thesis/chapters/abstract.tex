@@ -1,0 +1,30 @@
+\startcomponent thesis/chapters/abstract
+
+\project masters-project
+\product thesis
+
+\title{Abstract}
+
+
+This manuscript presents a survey of the theoretical foundations of regular
+expressions and text editors.  A thourough introduction to the subjects of
+symbols, languages, grammars, regular expressions, finite automata, character
+sets (\Unicode), pattern matching, and the inner and outer workings of a text
+editor is given.
+
+The knowledge contained in this survey is then put to good use in presenting a
+method of compiling regular expressions into efficient finite automata that are
+well suited for pattern matching tasks in a text editor.  The usefulness of
+pattern matching inside a text editor is also shown, by describing the
+command sets of modern text editors, such as \SAM\ and \cap{vim}.
+
+Finally, a pattern||matching library has been written that can be used in, for
+example, a text editor.  A library implementing an efficient data structure for
+representing sequences has also been written.  Both these libraries have been
+used to create an example text editor that uses the pattern||matching library
+in implementing its command set and the data||structure library in
+implementing its buffering strategy.  All pieces of software have been
+documented using a literate programming style of writing and are included in
+this manuscript for reference.
+
+\stopcomponent

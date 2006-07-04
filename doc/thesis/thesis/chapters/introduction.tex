@@ -1,0 +1,67 @@
+\startcomponent thesis/chapters/introduction
+
+\project masters-project
+\product thesis
+
+\chapter{An Introduction}
+
+\Term{Pattern matching} has a broad area of application in computer science.
+It is used in database query systems, data processors, lexical analyzers, and
+text editors.  Of special interest to us is its use in the last.
+
+Text editors are one of the main tools for software development, since sooner
+or later you, as a software developer, will inevitably be required to alter the
+contents of your source code.  The usefulness of an editor varies greatly
+depending on what kinds of features it boasts, and even though opinions on
+which text editor is to prefer over all others, an editor would not be of much
+use unless it provides a good way of searching the contents of the file
+currently being edited.  This feature existed in the first on||line text
+editors\footnote{On-line in the sense of being connected to a terminal,
+providing output on a television||like terminal screen.} and the usefulness of
+\Term{regular expressions} was recognized very early as the means of specifying
+the patterns used as search terms.
+
+In fact, it can be argued that the introduction of regular expressions to {\em
+real} computers was a result of the need for a way to represent search patterns
+in the \Qed\ \cite[RitchieThompson70,RitchieQEDHistory]\ editor.
+\Name{Ken}{Thompson} devised a method that turned a regular expression into
+machine code\footnote{This was the first use of on||the||fly
+compiling\footnote{Another term for this is
+just||in||time, or JIT, compiling.}, i.e., the
+process of generating computer instructions and running them as the situation
+demanded, in history \cite[KernighanPike99].}
+\cite[Thompson68,HopcroftMotwaniUllman01]\ that executed a nondeterministic
+finite automaton representation of the original regular expression.  This
+proved very fruitful and spawned a lot of research interest into the subject of
+regular expressions and finite automata for use in computers.
+
+This manuscript attempts to survey the necessary theoretical background behind
+regular expressions and text editors.  In doing this, we’ll begin by discussing
+the subjects of symbols, alphabets, strings, languages, grammars, regular
+expressions, finite automata of various types, character sets, code points, and
+character encodings in \inchapter[definitions].  In \inchapter[the real world]
+we’ll then look at how regular expressions can be used in real||world
+applications, and some of the common extensions such use has introduced over
+time to the syntax and even semantics of regular expressions.
+\inchapter[patterns] will then introduce the problems of pattern matching and
+submatch addressing, also discussing how regular expressions may be applied to
+solve these problems.  Then, in \inchapter[construction], we’ll look at how we
+can create finite automata that we may then simulate the execution of on a
+computer.  Being somewhat more light||hearted, \inchapter[text editors -
+external] discusses the external functionality of text editors, followed by a
+theoretical discussion of the internal functionality of text editors in
+\inchapter[text editors - internal].  \inchapter[regexes in text editors] then
+looks at how regular expressions have been used in the command sets of two
+modern text editors that use them extensively.  The following chapter,
+\inchapter[new syntax], introduces a suggestion for a new syntax for regular
+expressions that will be useful in expressing regular expressions in an
+interactive processes, such as a text editor.  A software library that
+implementations these regular expressions using efficient finite automata is
+then discussed in \inchapter[implementation
+- regexes], followed by the implementation of an example text||editor that
+tries to put these regular expressions to good use in its command set.
+Finally, \inchapter[future work] discusses further ideas relating to the
+subjects introduced in this manuscript that one may want to investigate
+further.
+
+\stopcomponent

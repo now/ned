@@ -1,0 +1,474 @@
+\startcomponent thesis/chapters/new-regexes
+
+\project masters-project
+\product thesis
+
+\chapter
+  [new syntax]
+  {A New Syntax for Regular Expressions}
+
+
+% TODO: how do we discuss semantics here
+This chapter will cover the work that has been done on trying to define and
+implement a new regular expression syntax and associated semantics for it.
+
+The new syntax was designed with a couple of goals in mind.  A new regular
+expression syntax should:
+
+\startitemize
+  \item Be easy to read and understand
+  \item Be as succinct as possible
+  \item Make simple things easy to express, and hard things possible
+\stopitemize
+
+These goals rely on each other in a sense.  Succinctness makes things easy to
+read, as there is less of it.  Understandability may suffer from succinctness,
+but this is counter||weighted by simple things being easy to express.
+
+As not all people think alike, it’s important to provide means for users to
+customize the language themselves.  This is much the same workings that make
+colloquializations so important.  Anyhow, we add another point to our design
+goals:
+
+\startitemize
+  \item Allow the user to extend the syntax
+\stopitemize
+
+The next couple of sections will introduce a new syntax that tries to achieve
+the goals outlined above.
+
+
+
+\section{An Introduction}
+
+We’ll begin by presenting you with the whole grammar all at once as
+\inbnfgrammar[bnf:new regex syntax] and then discuss the parts of the grammar
+that need clarification.  This grammar is to be known as \NRE, short for New
+Regular Expression among other possible expansions\footnote{Can you catch them
+all?}, notation, following the naming-scheme of the notations defined by
+\POSIX\ (\inchapter[the real world]), i.e., \BRE\ and \ERE.
+
+\placebnfgrammar
+  []
+  [bnf:new regex syntax]
+  {A complete grammar of the new regular expression syntax: \NRE.}
+  {\startbnfgrammar[]
+     <regex>: <concat> | <regex> "|" <concat>
+     <concat>: <piece> | <concat> <piece>
+     <piece>: <atom> | <atom> <quantifier>
+     <atom>: <assertion>
+           | <literal>
+           | "."
+           | "<[" <symbol range> "]>"
+           | '<"' <escaped string> '">'
+           | "<'" <string> "'>"
+           | "<" <rule> ">"
+           | "[" <regex> "]"
+           | "(" <regex> ")"
+     <quantifier>: <greedy quantifier> | <non-greedy quantifier>
+     <greedy quantifier>: "*" | "+" | "?" | <range>
+     <non-greedy quantifier>: <greedy quantifier> "?"
+     <range>: "<" <integer> ">"
+            | "<" <integer> "," ">"
+            | "<" <integer> "," <integer> ">"
+            | "<" "," <integer> ">"
+     <assertion>: "^" | "$" | "^^" | "$$" %$
+
+     <literal>: <non-{\tttf\texescape} symbol> | "\" <special symbol>
+     <symbol range>: \dots
+     <escaped string>: <escaped symbol> | <escaped string> <escaped symbol>
+     <escaped symbol>: <non-{\tttf\texescape} symbol> | "\n" | "\t" | "\" <escaped special symbol>
+     <escaped special symbol>: '"' | "\"
+     <string>: <non-\type{'} symbol> | <string> <non-\type{'} symbol>
+     <rule>: <non-\type{>} symbol> | <rule> <non-\type{>} symbol>
+     <integer>: <digit> | <integer> <digit>
+     <digit>: A \Unicode\ digit
+     <non-{\tttf\texescape} symbol>: $\hbox{\Unicode} \setminus \{ \text{\tttf\texescape} \}$
+     <non-\type{'} symbol>: $\hbox{\Unicode} \setminus \{ \text{\tttf\bnfsinglequote} \}$
+     <non-\type{>} symbol>: $\hbox{\Unicode} \setminus \{ \text{\type{>}} \}$
+     <special symbol>: "|" | "." | "<" | "(" | "*" | "+" | "?" | "\" | "^" | "$" %$
+
+   \stopbnfgrammar}
+
+At first it may seem like a rather complicated grammar; compared to the one
+for regular expressions in \Vim, see
+\inbnfgrammar[vim regular expression syntax:bnf:vim regex], though, it’s
+actually quite simple.  The rules that deal with escaping (\<escaped \dots>
+and \<non-\dots>) obfuscate an otherwise rather simple grammar.
+
+% TODO: we haven't discussed properties of code points
+Please note that the meaning of \Unicode\ in the grammar is meant to represent
+the union of rules for the \Unicode\ character set.  That is, a
+\<non-{\tttf\texescape} symbol> is any valid \Unicode\ symbol except a
+backslash and a \<digit> is any valid \Unicode\ digit, i.e., any code point
+that has the Nd property.
+
+The following sections will introduce the various parts of the grammar, though,
+the rules for \<regex>, \<concat>, and \<piece> introduce nothing new and we’ll
+not discuss them further.
+
+
+\section{New Atoms---Clearing the Way}
+
+Our syntax introduces a range of new atoms.  The \<atom> rule has in fact been
+the center of our design effort.  
+
+
+\section{Two Variants of Subexpression Grouping}
+
+One of the problems with many other regular expression syntaxes is that they
+have a hard time separating subexpressions that should be considered for
+submatch addressing from those that shouldn’t.  It’s often desirable to
+perform grouping without the contained subexpression being considered for
+submatch addressing, as keeping track of it will induce an execution time
+penalty.  Also, if the subexpression is uninteresting, this will increase
+recall, which lowers precision, to use terms borrowed from information
+retrieval.  Simply put, it makes it harder for the user to keep track of the
+interesting subexpressions, if uninteresting ones can't be kept out.
+
+The standard syntax for subexpression grouping is to use either
+\TypedRegex{(}\dots\TypedRegex{)} or \TypedRegex{\(}\dots\TypedRegex{\)}
+depending on if the syntax is \BRE\ or \ERE.  Such subexpressions are always
+considered for submatch addressing; neither grammar, as defined by
+\POSIX, provide means for the user to disable submatch addressing.  \Perl\
+solves this by extending the syntax with the following constructions:
+
+\startbnfgrammar[]
+  <addressed subexpression>: "(" <regex> ")"
+  <unaddressed subexpression>: "(?:" <regex> ")"
+\stopbnfgrammar
+
+This works fine, but the syntax is very cumbersome.  Having to type two extra
+symbols (\type{?:}) to turn off submatch addressing seems unnecessary.  It
+turns out that this is actually the case.
+
+The solution in our grammar is to use two different delimiters, one set for
+addressed subexpressions and one for unaddressed ones:
+
+\startbnfgrammar[]
+  <addressed subexpression>: "(" <regex> ")"
+  <unaddressed subexpression>: "[" <regex> "]"
+\stopbnfgrammar
+
+The use of square brackets (\type{[} and \type{]}) would cause problems with
+the \BRE\ and \ERE\ syntaxes, as they are used for character ranges.  Our
+grammar, however, uses a different syntax for character ranges,
+\TypedRegex{<[}\dots\TypedRegex{]>}, which solves this problem.  Some may now
+argue that we have made unaddressed subexpressions easier to type at the cost
+of making character ranges harder.  While this is true, we’ve done so with good
+reason: character ranges are a thing of the past.  Character ranges work fine
+for a highly restricted character set, such as \ASCII, where it's clear what a
+range such as \TypedRegex{[a-z]} means, but crumble under the weight of a
+larger one, such as \Unicode, where the question of whether the range should
+include lowercase characters other than those from the English language or not
+arises.  Our solution is to make character ranges possible to specify, but
+users are provided with a much more versatile tool, namely the \<rule>.
+
+
+\section{The Rules That Dictate Our Regular Expressions}
+
+It’s now time to introduce the most innovative part of the grammar, the
+\<rule>.  A \<rule> is a name of another regular expression that is to be
+substituted into the regular expression.  An example is if we have previously
+defined a regular expression \TypedRegex{<digit>} as
+
+\placeregex
+  {none}
+  \TypedRegex{<digit> = 1|2|3|4|5|6|7|8|9|0}
+
+and would like to define a regular expression \TypedRegex{<integer>} that
+matches a concatenation of one or more digits.  We might do this as
+
+\placeregex
+  {none}
+  \TypedRegex{<integer> = <digit>+}
+
+And we can then, in turn, use \TypedRegex{<integer>} in another regular
+expression.
+
+This may seem to be nothing more than a macro preprocessor, and that is
+almost true.  The strange thing is, this has never been done before, at least
+not for interactively used regular expression syntaxes.  Both the \FSA\
+Utilities \cite[vanNoord00]\ and Xerox finite-state software \cite[Beesley03]\
+have ways of naming regular expressions in this way.  The difference is that
+both are meant for non||interactive use.  The same goes for \Perl\ 6's regular
+expressions that will provide a syntax for naming regular expressions similar
+to that presented above \cite[Wall02,Randal02,Conway02].  Their exact semantics
+are still unclear, though, as this part of \Perl\ 6 has yet to be written.
+
+It should be noted that the macro preprocessor is actually not a preprocessor
+at all, but built into the regular expression parser.  Thus, a \<rule> is
+expanded not as the contents of the rule, but as a unit, or \<atom> in this
+case.  This saves us from having to wrap the definition of \TypedRegex{<digit>}
+in square brackets, for example.
+
+\startexample[example:floating point number]
+  Let’s write the regular expression found in
+  \in[the real world:regex:posix floating point number]\ using our new syntax.
+
+  Perhaps the easiest way to go about this task is to break it up into
+  components.  We begin by creating a named regular expression for the optional
+  sign that appears twice in the regular expression:
+
+  \placeregex
+    {none}
+    \TypedRegex{<sign> = [+|-]?}
+
+  Simple enough.  Next, let’s define a regular expression that matches a float
+  without the optional sign and exponentiation:
+
+  \placeregex
+    {none}
+    \TypedRegex{<float> = <digit>*[<digit>\.|\.<digit>]<digit>*}
+
+  This is a useful regular expression in its own right, as it will match many
+  floating point values.  We do, however, want to define a regular expression
+  that matches a wider range of values and we begin with one that may begin
+  with an optional sign:
+
+  \placeregex
+    {none}
+    \TypedRegex{<sfloat> = <sign><float>}
+
+  Finally, we write a regular expression that matches an optionally signed
+  floating point value with an optional exponentiation:
+
+  \placeregex
+    {none}
+    \TypedRegex{<sfloate> = <sfloat>[[e|E]<sign><digits>]?}
+
+  The \TypedRegex{<sfloate>} regular expression can then be used whenever we
+  wish to match an optionally signed, optionally exponentiated floating point
+  value.
+\stopexample
+
+The previous example shows a lot of the power of rules.  It allows us to give
+meaningful names to regular expressions that we may want to reuse.  We may, for
+example, use \TypedRegex{<sfloate>} as a regular expression, instead of typing
+the whole regular expression of
+\in[the real world:regex:posix floating point number].  It also makes it easier
+to change the definition of the regular expression, as, if we reuse it
+properly, all instances of it will follow suit.
+
+Some things remain to be studied, though.  As the example of floating point
+values showed, we create a couple of regular expressions along the way to our
+final one.  Some may be useful, others not.  Thus, there is a question of how
+to hide regular expressions that aren't meant to be used beyond a certain set
+of regular expressions.  This is much the same problem as with hiding private
+methods in object||oriented programming or similar.
+
+Some sort of namespacing may also be desirable, so that a set of related
+regular expressions can be grouped together as a single unit.  For interactive
+use, this would make it possible for users to choose a set of regular
+expressions that they would like to use depending on need.
+
+These questions are open for discussion and will receive more attention in the
+future.  For now, the important thing is that they allow us to experiment with
+naming regular expressions and to see what kind of reuse we can expect from
+them.
+
+
+\section{Literal Strings---Escaped and Otherwise}
+
+A problem with many regular expression syntaxes is that they use far too many
+operator symbols.  This forces a lot of escaping to be used which makes the
+regular expression hard to read.
+
+While our syntax doesn't suffer as much from this problem as many other, it’s
+still an issue that needs some attention.  The solution is to allow sections of
+the regular expression to be left uninterpreted.  We add two constructions to
+the \<atom> nonterminal:
+
+\startbnfgrammar[]
+  <atom>: '<"' <escaped string> '">' | "<'" <string> "'>"
+\stopbnfgrammar
+
+Both constructions allow the user to write an uninterpreted string in the
+middle of a regular expression.  The difference between the two is slight:  The
+first allows certain symbols to appear, such as a \type{"}, which would
+otherwise be seen as part of the terminating \type{">} and a
+\CharacterName{line feed (fd)} \type{\n} or \CharacterName{character
+tabulation} \type{\t};  the second doesn't provide an escaping method, and thus
+isn’t interpreted in any way.  This means that an apostrophe or single quote
+\type{'} may not appear within the string.
+
+An example of the usefulness of this syntax is in creating a regular expression
+for matching certain regular expressions:
+
+\placeregex
+  {none}
+  \TypedRegex{<"<sfloat>[[e|E]<sign><digits>]?">}
+
+This regular expression will match the regular expression we wrote in
+\inexample[example:floating point number] itself.
+
+
+\section{Quantifiers and Ranges}
+
+% TODO: shuld be using \TypedRegex here
+There are several ways of expressing repetition in our syntax.  It contains the
+standard ones, such as \type{*}, \type{+}, and \type{?}, but also a new syntax
+for the bounded repetition usually expressed using braces, see
+\insection[the real world:iteration shorthands].  The operators are described in
+\intable[table:repetition operators].
+
+\placetable
+  []
+  [table:repetition operators]
+  {The repetition|/|iteration|/|quantifier|/|closure operators of our syntax.}
+  \starttable[|l|lp(25em)|]
+  \HL
+  \NC \bf Operator                    \NC \bf Repetitions of the quantified regular expression  \NC\AR
+  \HL
+  \NC \type{*}                        \NC zero or more                                          \NC\AR
+  \NC \type{+}                        \NC one or more                                           \NC\AR
+  \NC \type{?}                        \NC zero or one                                           \NC\AR
+  \NC \type{<}$n$\type{>}             \NC exactly $n$                                           \NC\AR
+  \NC \type{<}$n$\type{,>}            \NC $n$ or more                                           \NC\AR
+  \NC \type{<}$n$\type{,}$m$\type{>}  \NC $n$ to $m$                                            \NC\AR
+  \NC \type{<,}$m$\type{>}            \NC $0$ to $m$                                            \NC\AR
+  \HL
+  \stoptable
+
+The advantage of using pointed braces over curly ones is that we use one less
+symbol in our syntax\footnote{A second advantage is that they are a lot easier
+to write in a \TeX\ document than their curly counterparts.}.
+
+There are also non||greedy iterations, that are expressed in the same way as
+introduced in \insection[patterns:greedy and non-greedy matching], by adding
+the \TypedRegex{?}||suffix to the iterator operator.
+
+
+\section{Assertions}
+
+There isn't much fun going on for assertions in our syntax.  Currently, the
+only ones supported are those that match at the beginning and end of a line,
+\TypedRegex{^} and \TypedRegex{$}, and those that match at the beginning and
+end of the input, \TypedRegex{^^} and \TypedRegex{$$}.  This is such, as the
+first two have traditionally been used for the line||wise matching.  However,
+as we are trying to break free from the line||wise paradigm (see
+\insection[regexes in text editors:problems]), the two pairs may swap meanings
+in a future version of the syntax, depending on what turns out to work best.
+
+
+\section{Unicode and Symbol Ranges}
+
+Of great importance to our syntax|<|and our implementation of it|>|was to
+use \Unicode\ as the character set.  In doing so, we allow any text
+written in a human language to be described by a regular expression using our
+syntax.  This was important, as we realize that not all input will be written
+using the limited \ASCII\ character set, for example.
+
+The exact syntax of symbol ranges remains to be defined.  It’s clear, however,
+that only allowing the simple kind of ranges that are described in
+\insection[the real world:character ranges]\ are not sufficient in describing
+the kind of languages that we want to match, seeing as how we use \Unicode\ as
+our character set.
+
+\Unicode\ Technical Standard \#18 \cite[Davis04]\ discusses how to use
+\Unicode\ together with regular expressions.  This document is, however, far
+too concerned with the exact syntax to use, which is greatly influenced by the
+syntax used in \Perl\ 5.  It’s therefore not quite the answer to our question
+as to how to merge regular expressions with the vast expanse that is the
+\Unicode\ character set.
+
+\section{Some Tasteful Examples}
+
+Before we end this chapter and go on to discuss the implementation of this new
+regular||expression grammar, let’s step through some more examples of how these
+regular expressions can be used together with an editor that possesses a
+command||set similar in nature to that of the text editor \SAM.
+
+\startexample
+  In \cite[Pike87], Rob Pike suggests, through step||wise refinement, a
+  method for renaming a variable in a \CLang\ source||file.  We’ll now see how
+  the regular expressions used in this method may be simplified using {\NRE}s
+  and how this simplifies the method as a whole.
+
+  The problem is the following: we want to rename the variable \C{n} to \C{num}
+  throughout the buffer.
+
+  Our first attempt at a solution is to extract every \C{n} and change it to
+  \C{num}:
+
+    \starteditorinput
+      \type{, x/n/ c/num/}
+    \stopeditorinput
+
+  This solution isn’t all that great, as it will change {\em every} ‘n’ found
+  in the buffer, not just variables that are named thusly.  A better solution
+  is to extract all variables in the buffer and, depending on if they are our
+  desired variable \C{n}, change them:
+
+    \starteditorinput
+      \type{, x/[A-Za-z_][A-Za-z_0-9]*/ g/n/ v/../ c/num/}
+    \stopeditorinput
+
+and, using {\NRE}s:
+
+    \starteditorinput
+      \type{, x/<ident>/ g/^^n$$/ c/num/}
+    \stopeditorinput
+
+  The pattern \TypedRegex{[A-Za-z_][A-Za-z_0-9]*} matches \CLang\ identifiers.
+  We haven’t defined the \TypedRegex{<ident>} rule expands to, but one way that
+  works is:
+
+    \placeregex
+      {none}
+      {\TypedRegex{<identhead> = [A-Za-z_]} \crlf
+       \TypedRegex{<identtail> = [A-Za-z_0-9]*} \crlf
+       \TypedRegex{<ident> = <identhead><identtail>}}
+
+  We of course don’t have to break the definition up into three pieces, but it
+  makes it somewhat clearer what’s going on.  We could also choose freely
+  whether to put the \TypedRegex{*} in the definition of
+  \TypedRegex{<identtail>} or in \TypedRegex{<ident>}.  The earlier was chosen,
+  as it seems more natural, at least to me.
+
+  Returning to our commands, in \SAM\ we are forced to use two guards,
+  \type{g/n/} and \type{v/../} before we change the variable’s name.  The first
+  checks that the variable’s name contains an ‘n’ and the second makes sure
+  that the variable’s name doesn’t contain two (or more) characters.  Using
+  {\NRE}s, we can write this guard in one go as \type{g/^^n$$/}.  The
+  surrounding assertions will make sure that the matched variable is \C{n} as
+  we wished.
+
+  Another refinement of our command is to not alter ‘n’s found inside character
+  constants and string literals.  We do this by using the \type{y} command:
+
+    \starteditorinput
+      \type{, y/'\\?.'/ y/"[^"\\]*(\\.[^"\\]*)*"/} \crlf
+      \type{  x/[A-Za-z_][A-Za-z_0-9]*/ g/n/ v/../ c/num/}
+    \stopeditorinput
+
+and, using {\NRE}s:
+
+    \starteditorinput
+      \type{, y/<chconst>|<string>/ x/<ident>/ g/^^n$$/ c/num/}
+    \stopeditorinput
+
+  Again, we use rules to simplify our commands.  The rules can be defined as:
+
+    \placeregex
+      {none}
+      {\TypedRegex{<chconst> = '\\?.'} \crlf
+       \TypedRegex{<string> = "[^"\\]*(\\.[^"\\]*)*"}}
+
+  The regular expression for matching strings is particularly complex and uses
+  some tricks to speed up matching.  As this pattern matches strings as defined
+  in many programming languages, defining it only once saves us a lot of memory
+  (human memory that is) and typing.
+
+  Again returning to our commands, the use of {\NRE}s makes the command a lot
+  shorter, thus easier to type and read, but also a lot easier to understand.
+  It’s much easier to see what the intent of the command is when it isn’t
+  cluttered with the details of the patterns.  Instead, we can read it aloud to
+  understand its meaning: “In the whole buffer (\type{,}), look for identifiers
+  (\type{x/<ident>})  between matches of character constants and string
+  literals (\type{x/<chconst>|<string>/}) that consist of the sole character
+  ‘n’ (\type{g/^^n$$/}) and change them to “num” (\type{c/num}).  Such a
+  translation isn’t as easy to make for the first command.
+\stopexample
+
+\stopcomponent

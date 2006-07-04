@@ -1,0 +1,186 @@
+\startcomponent thesis/chapters/automatons
+
+\project masters-project
+\product thesis
+
+\startFLOWchart[flowchart entities][nx=3,ny=1,maxwidth=\textwidth]
+  \startFLOWcell
+    \name{input}
+    \location{1,1}
+    \shape{product}
+    \text{input}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{action}
+    \location{2,1}
+    \shape{action}
+    \text{action}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{output}
+    \location{3,1}
+    \shape{loop}
+    \text{output}
+  \stopFLOWcell
+\stopFLOWchart
+
+\startFLOWchart[digestive system][maxwidth=\textwidth]
+  \startFLOWcell
+    \name{food}
+    \location{1,1}
+    \shape{product}
+    \text{food}
+    \connection[rl]{mouth}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{mouth}
+    \location{2,1}
+    \shape{action}
+    \text{mouth}
+    \connection[bt]{esophagus}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{esophagus}
+    \location{2,2}
+    \shape{action}
+    \text{esophagus}
+    \connection[bt]{stomach}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{stomach acid}
+    \location{3,3}
+    \shape{product}
+    \text{stomach acid}
+    \connection[lr]{stomach}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{stomach}
+    \location{2,3}
+    \shape{action}
+    \text{stomach}
+    \connection[bt]{small intestine}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{small intestine}
+    \location{2,4}
+    \shape{action}
+    \text{small intestine}
+    \connection[bt]{liver}
+    \connection[bt]{gallblader}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{liver}
+    \location{1,5}
+    \shape{action}
+    \text{liver}
+    \connection[bt]{large intestine}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{gallblader}
+    \location{3,5}
+    \shape{action}
+    \text{gallblader}
+    \connection[bt]{large intestine}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{large intestine}
+    \location{2,6}
+    \shape{action}
+    \text{large intestine}
+    \connection[bt]{excretions}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{excretions}
+    \location{2,7}
+    \shape{loop}
+    \text{excretions}
+  \stopFLOWcell
+\stopFLOWchart
+
+\startFLOWchart[pattern matching model][nx=3,ny=3,maxwidth=\textwidth]
+  \startFLOWcell
+    \name{input}
+    \location{1,3}
+    \shape{product}
+    \text{input $s$}
+    \connection[rl]{matcher}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{pattern}
+    \location{2,1}
+    \shape{product}
+    \text{pattern $p$}
+    \connection[bt]{generator}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{generator}
+    \location{2,2}
+    \shape{action}
+    \text{pattern matcher generator}
+    \connection[bt]{matcher}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{matcher}
+    \location{2,3}
+    \shape{action}
+    \text{pattern matcher $M$}
+    \connection[rl]{output}
+  \stopFLOWcell
+  \startFLOWcell
+    \name{output}
+    \location{3,3}
+    \shape{loop}
+    \text{\quote{yes} or \quote{no}}
+  \stopFLOWcell
+\stopFLOWchart
+
+% TODO: everything should be related to \textheight here
+\startuniqueMPgraphic{note}{height}
+  numeric h; h := \MPvar{height};
+
+  x1 = x8 = -.5h;
+  y1 = y4 = y2 + .25h;
+  x2 = x7 = x1 + .25h;
+  y2 = y3 = -.5h;
+  x3 = x6 = x4 - .25h;
+  x4 = x5 = x1 + h;
+  y5 = y8 = y6 - .25h;
+  y6 = y7 = y3 + h;
+
+  path p; p = z1--z2--z3--z4--z5--z6--z7--z8--cycle;
+
+  fill p scaled .87 withcolor red;
+  draw p withcolor black;
+  label(btex {\vi\tt\bf STOP} etex, origin) withcolor white;
+\stopuniqueMPgraphic
+
+%\startuniqueMPgraphic{note}{height}
+%numeric height; height := \MPvar{height};
+%x1 = (-height / 2) + height * 0.2;
+%y1 = (-height / 2);
+%x2 = x1 + height * 0.8;
+%y2 = y1;
+%x3 = x1 + height;
+%y3 = y1 + height * 0.2;
+%x4 = x3;
+%y4 = y1 + height * 0.8;
+%x5 = x2;
+%y5 = y1 + height;
+%x6 = x1;
+%y6 = y1 + height;
+%x7 = 0;
+%y7 = y1 + height * 0.8;
+%x8 = 0;
+%y8 = y1 + height * 0.2;
+%path p; p = z1--z2--z3--z4--z5--z6--z7--z8--cycle;
+%fill p scaled height withcolor red;
+%draw p scaled height withcolor black;
+%fill p scaled (.7 * height) withcolor white;
+%label(btex {\bf !} etex, origin) withcolor red;
+%%fill fullcircle scaled \MPvar{height} withcolor red;
+%%draw fullcircle scaled \MPvar{height} withcolor black;
+%%fill fullcircle scaled (.7 * \MPvar{height}) withcolor white;
+%%label(btex {\bf !} etex, origin) withcolor red;
+%\stopuniqueMPgraphic
+
+\stopcomponent

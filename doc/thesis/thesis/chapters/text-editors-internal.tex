@@ -1,0 +1,882 @@
+\startcomponent thesis/chapters/text-editors-external
+
+\project masters-project
+\product thesis
+
+\chapter
+  [text editors - internal]
+  {Text Editors: Internal Functionality}
+
+
+Internally, text editors are often very complex beings.  The path of a symbol
+input by the user to it being output on screen is winding.  Therefore, it’s
+important that we understand the specific tasks that a text editor must
+perform, and also how it may go about doing so.
+
+In this chapter we’ll cover what a text editor does in reading and displaying
+the results of user input.  Specifically, we’ll cover (a) input drivers,
+which read commands from the user and delegates tasks to other subsystems of
+the text editor; (b) buffer handlers, which manage the contents of buffers
+being edited by the user; (c) output drivers, which include both those that
+output to the screen|<|commonly referred to as redisplay engines|>|and output
+to a file on disk.
+
+% TODO: This needs to be filled out a bit.
+
+
+
+\section{Input Drivers}
+
+This chapter introduces the two most common, to not say only, ways of providing
+input to a text editor: the use of a keyboard and of a mouse.  Actually, until
+recently|<|well, within the past ten to twenty years|>|the only way to provide
+input was through the use of a keyboard or a teletype.  A teletype is actually
+only a rather fancy typewriter (\infigure[figure:teletype 33]), and for our
+understanding of the subject we may simply equate it with a keyboard.
+
+\placedescribedfigure
+  []
+  [figure:teletype 33]
+  {The Teletype model 33.  \nomarking{Ken Thompson is operating a Teletype
+   model 33 connected to a \DEC\ \PDP-11 while Dennis Ritchie stands beside him.
+   This photograph was taken at Bell Labs around 1972, the time at which \UNIX\
+   had just gained a filesystem.  Note the posture of Ken; typical of a true
+   computer junkie.}}
+  {\externalfigure[internal:teletype]}
+
+\subsection{The keyboard provides a fast and powerful input method.}
+
+The keyboard is still the most useful input device when it comes to editing
+text.  Its simplicity together with the numerous symbols and combinations
+thereof that can be produced makes it exceedingly well suited for the task.
+Most keyboards are designed with upwards of a hundred unique keys, some that
+may be combined with others to generate different symbols or key||sequences
+altogether.  For example, all modern keyboards come equipped with the
+\KbdKey{Ctrl} key, which in combination with most other keys generates a
+key||sequence that may be treated not as a symbol to be inserted into the text
+being edited, rather signaling that another action should be taken instead.  To
+further clarify by giving a more direct example: in the \EMACS\ editor
+\KbdKey{Ctrl}-\KbdType{b} will move point one symbol to the left and
+\KbdKey{Ctrl}-\KbdType{f} will move point one symbol to the right.
+
+\placefigure
+  [][]
+  {Modern Ergonomic Keyboard}
+  {\externalfigure[internal:ergonomic keyboard]}
+
+The responsibility of the input driver for the keyboard in a text editor is to
+wait for the user to type some sequence of keys and to delegate tasks
+accordingly.  As was suggested in the previous paragraph, some sequences will
+place new symbols into the buffer being edited, while others may trigger some
+other functionality, such as moving point.
+
+Most often, the keyboard input driver is modeled around a dispatch table
+indexed by the code point|<|for some character encoding|>|of the input symbol.
+\inalgorithm[algorithm:keyboard input driver] is a sketch of the innards of a
+keyboard input driver.
+
+\placealgorithm
+  [][algorithm:keyboard input driver]
+  {Keyboard input processing in a text editor}
+  {\startalgorithmio
+     \sym{Input:} A dispatch table to be used for lookups.
+     \sym{Output:} None.
+   \stopalgorithmio
+\startPSEUDO
+define $\Floop(table)$
+  forever
+    $\Frepl({\it table})$
+
+define $\Frepl({\it table})$
+  $s = \Freadsymbol()$
+  $c = \Fcodepoint(s)$
+  $f = {\it table}_c$
+  $f()$
+  $\Fredisplay()$
+\stopPSEUDO
+}
+
+We assume that the \Freadsymbol\ function has been defined and reads
+a symbol from the user.  The \Fcodepoint\ function should be familiar
+from \informula[definitions:formula:codepoint].  Finally, we assume that
+\Fredisplay\ has been defined and takes care of updating the display to
+any changes that may have been made to the buffer.
+
+The idea is that once the \Floop\ function has been entered, the text editor
+will continuously call \Frepl, which will read input, find a function to
+dispatch to, call it, and update the display.
+
+As we discussed in \inchapter[text editors - external], some editors work by
+having different editing modes.  Simply put, this can be implemented by having
+commands that change what table is being used in the \Floop\ function.
+
+\subsection
+  {The computer mouse is mainly useful in moving point around inside a buffer.}
+
+The computer mouse, or simply “mouse”, was first introduced in 1963
+by \Name{Douglas}{Engelbart} of Stanford Research Institute \cite[Engelbart63].
+He didn’t receive a patent for it until 1970, though, and at the time it was
+known as an “X-Y Position Indicator For A Display System”; we are therefore
+greatly indebted to whomever came up with the term \Term{mouse}.  It wasn’t
+until the introduction of the Apple Machintosh and other graphical systems in
+the mid||eighties, though, that the mouse became a part of the standard
+computer setup.  Forefront techo||junkies such as \Name{Rob}{Pike} had been
+experimenting since the beginning of the 1980s with integrating the use of a
+mouse for interactive applications, such as text editors, in his Blit system
+\cite[Pike84].
+
+\placefigure
+  [][]
+  {Modern Ergonomic Mouse}
+  {\startcombination[3*1]
+     {\externalfigure[internal:ergonomic mouse left]} {(left)}
+     {\externalfigure[internal:ergonomic mouse top]} {(top)}
+     {\externalfigure[internal:ergonomic mouse right]} {(right)}
+   \stopcombination}
+
+The input provided by a mouse is of the form
+$⟨{\it button}, \text{$x$||{\it coordinate}}, \text{$y$||{\it coordinate}}⟩$,
+where $\it button$ is an identifier for the mouse button that was pressed and
+the two coordinates identify the location on the two||dimensional plane that is
+the screen at which this button was pressed.
+
+Input transmitted through the use of a mouse is used to alter the position of
+point within the buffer.  Some kind of coordinate transformation is usually
+necessary, as the $x$ and $y$ coordinates received are \Term{screen
+coordinates} that don’t agree with $x$ (column) and $y$ (line) coordinates
+within a buffer.  The matter is further complicated, as we need to turn this
+transformed pair of coordinates into an index into the text of the buffer,
+suitable as an argument to the \Fmoveto\ function discussed in
+\insection[text editors - external:moving point].  It is the responsibility of
+the mouse driver of the text editor to perform the necessary conversions and
+invoking \Fmoveto\ on the result.  We’ll not go into the details of
+this procedure.
+
+All things considered, the mouse isn’t as useful for text editing tasks as one
+may initially assume.  The reason for this is that most tasks that can be
+performed using the mouse have counterparts using the keyboard that are usually
+faster to access.  Typists prefer to keep their fingers over what is known as
+the \DefineTerm{home row}, i.e., the set of keys that are right under the ten
+fingers when resting ones palms over the keyboard.  Utilizing the mouse
+requires you to remove one hand from this position, perform the desired task
+using the mouse, and then restoring the position of the hand over the home row.
+This takes a lot of time and disrupts the rhythm of the fingers dancing over
+the keys on the keyboard.
+
+There are also health considerations associated with the use of a mouse.  The
+elbow and wrist are put into an unusual position and overuse may cause serious
+damage to muscles.  Keyboards aren’t free of health issues either, but these
+are easier to overcome.  Research into ergonomics and keyboards has been more
+extensive than that with mice, which suggests that getting used to using a
+keyboard is beneficial.
+
+
+\section{Buffers}
+
+We discussed buffers in some detail in the previous chapter.  We defined a
+buffer $B$ to be a tuple $(w, p)$, where $w$ was a string of some alphabet
+$Σ^∗$ and $p$ was a natural number ($\naturalnumbers$).  While this
+definition serves us well in mathematical expositions, the question of how we
+represent it, especially $w$, in a computer isn’t a simple one to answer.
+The following sections will discuss various methods used to store $w$ in
+computer memory.
+
+Before we begin, though, we require some additional definitions, as this
+discussion will make use of some concepts not previously introduced.
+
+A method by which we store and manage the contents of $w$ in memory is known as
+a \DefineTerm{memory buffering strategy} or, the slightly shorter,
+\DefineTerm{buffering strategy}.  You may now realize why our tuple of string
+and point is known as a “buffer”.  In fact, memory buffering can be applied to
+many different problems, and is in no way bound to its use in managing the
+contents of buffers in a text editor.  This is a prime example of one of the
+problems with computational science.  Buffers in text editors are so called as
+their underlying representation is at least tangential to that of buffering in
+computational science in general.  This, of course, makes no sense to most
+users, who are unfamiliar with these specifics.
+
+The idea of “the contents of $w$” has already been used in this section.  The
+\DefineTerm[string+contents]{contents} of a string $w$ is the representation of
+$w$ in the computer, stored in memory.  We’ll denote $w$ in computer memory
+as $w_{`mem}$.  A possible term for $w_{`mem}$ might be \DefineTerm{memory
+string}, and we’ll use this term whenever we need to talk about $w_{`mem}$ by
+name.
+
+% TODO: define span
+
+Finally, another operation on buffers is needed.  Our interest this time around
+is the extraction of a symbol $a_i$ from $w$.  In mathematical terms, this is a
+very simple operation.  From a computational viewpoint, however, this can be a
+very costly procedure. It is very important that the retrieval of a given
+symbol can be done quickly, as this is by far the most common task performed on
+a buffer.
+
+\startdefinition
+  The \DefineTerm{symbol||at operation} extracts a symbol from a buffer at a
+  given index into the contents of the buffer.
+
+  \startnathequation
+    \Fsymbolat\colon \Buffers×\naturalnumbers → Σ, \\
+    \Fsymbolat((w, p), i) = w_i.
+  \stopnathequation
+\stopdefinition
+
+The outline for the following subsections is to explain how some of the often
+used buffering strategies work.  This section then concludes with a subsection
+comparing them, both by their asymptotic properties and discussing other
+considerations that affect the choice of strategy.  The motto of the these
+subsections will be \DefineTerm{divide and conquer} and will be taken further
+and further as they progress.
+
+\subsection{Straightforward buffering: the array buffering strategy.}
+
+The unenlightened answer to our initial question of how to store $w$ is to
+simply represent it as a sequence of symbols stored in adjacent cells of
+computer memory.  The mapping between $w$ and $w_{`mem}$ is one||to||one.
+There is no extra processing involved in determining what symbols constitute
+$w$.  There are a number of problems with this strategy, however.  The main
+reason for these problems is that it isn't flexible enough, with respect to the
+length of $w$.  Substitutions of symbols in $w$ are fine, as they don't alter
+the length of $w$ and thus no extra memory is required to store it.  We run
+into problems when we try to add new text to $w$, though.  The reason is that
+we need more memory to store the old contents of $w_{`mem}$ plus the new in.
+Allocating new areas of memory is one of the most time||consuming tasks that a
+computer will perform.  Having to do this every time a new symbol is inserted
+into $w$ isn’t desirable.  We’ll not delve into the specifics of computer
+memory allocation strategies, it’s only important that we understand that one
+of the primary tasks of any good buffering strategy is to avoid extraneous
+invocations of the computer's memory allocation routines.
+
+The basic idea of the array method is depicted in
+\infigure[figure:array buffering strategy].
+
+\placefigure
+  []
+  [figure:array buffering strategy]
+  {The array buffering strategy.}
+  {\externalfigure[internal:array buffering strategy]}
+
+A simple optimization of this strategy is to allocate somewhat more memory than
+is necessary to fit $w_{`mem}$ into.  This allows us to append text to
+$w_{`mem}$ without the need for more memory, until we reach the end of the
+extra memory.  It doesn’t solve the problem of reallocation when we insert
+text in the middle of our string, though.  However, we can generalize the basic
+idea of this allocation of extra memory to solve this problem as well.  This
+method is described next.
+
+The array buffering strategy is used in many of the simpler user||input form
+fields that occur in computer user interfaces, where the contents of the buffer
+will be of a fixed and|/|or short length.
+
+\subsection
+  {Adding a gap of extra memory after point makes insertions and deletions easier.}
+
+The main problem with the array buffering strategy is that whenever we wish to
+alter the buffer, we may need to reallocate the whole buffer.  The gap
+buffering strategy solves this problem for many cases by splitting the buffer
+into two spans: one for what’s before point and one for what’s after.
+In||between the two spans, we keep a region of memory that isn’t yet part of
+$w$, known as a \DefineTerm{gap}.  We may use this gap for inserting and
+deleting text at point.  When inserting text, the first span is made longer and
+the gap shorter, and vice versa for deleting text; the second span is left
+unchanged.
+
+In \infigure[figure:gap buffering strategy] we see a possible configuration of
+a buffer using the gap buffering strategy.
+
+\placefigure
+  []
+  [figure:gap buffering strategy]
+  {The gap buffering strategy.}
+  {\externalfigure[internal:gap buffering strategy]}
+
+Whenever point is moved, we need to move the gap along with it.  This can be
+quite time||consuming, as we need to modify both spans as the gap slides along
+$w_{`mem}$.  To save some time, we can defer the movement of the gap until an
+editing operation actually takes place at point.  This avoids a lot of
+unnecessary moves, as point is often moved without modifications actually
+taking place at its new position within the buffer.
+
+The addition of a gap requires some additional checking to be done in our
+editing operations.  The \Fsymbolat\ operation needs to figure out what span
+contains the symbol we are looking for.  The \Finsert\ operation needs to make
+sure that the gap hasn’t been filled up.  If it has, a new gap must be
+allocated.  Still, the gap buffering strategy is efficient and simple to
+implement.  In fact, many|<|if not most|>|text editors, such as \EMACS\
+\cite[Stallman02], use this strategy.
+
+The gap buffering strategy is described in
+\cite[Lewis02,Wing97,Finseth91,Groom02,Greenberg96,Crowley98,Allen90,Allen91,Trier90,Allen92,Payne90,Valdes93].
+
+\subsection
+  {Breaking up the buffer into the lines it consists of is both natural and
+   easily done.}
+
+% TODO: is base unit the correct term?
+Perhaps second on the list of most often used buffering strategies we find the
+line span buffering strategy.  As you may have guessed from its name, this
+strategy relies on dividing the buffer into spans, each constituting a line of
+the buffer.  \infigure[figure:line span buffering strategy] shows a buffer
+with four lines in it.  Note how the lines aren’t stored continuously in
+memory.  This is precisely the reason for using this strategy, as changes local
+to a line are kept local to that region of memory.  A less precise reason is
+that many text editors work with lines as the base unit, both internally and
+externally.  Thus, breaking the buffer up into the lines that constitutes it is
+both natural and often desirable.
+
+\placefigure
+  []
+  [figure:line span buffering strategy]
+  {The line span buffering strategy.}
+  {\externalfigure[internal:line span buffering strategy]}
+
+With line spans, whenever a symbol is inserted, the line being modified must be
+reallocated to make room for the additional symbol.  This can again be
+time||consuming, just as the array buffering strategy was, though less so, as
+less memory needs to be moved around.  However, the effect is undesirable, and
+to solve this, one may recursively treat each line span as a buffer, allowing
+us to use the gap buffering strategy on it.  This can, for the same reasons as
+when we considered the whole buffer, save a lot of work.
+
+Each line span is linked to the next, so we don’t require any second data
+structure to manage them. However, to find a symbol with the
+\Fsymbolat\ function, we must traverse the lines in order to find the line that
+contains the desired symbol.
+
+\Vim\ uses the line span buffering strategy \cite[Moolenaar02]\ coupled with
+some rather advanced memory and disk caching policies to keep a buffer compact
+in memory while making sure that operations on it run smoothly and efficiently.
+
+The line span buffering strategy is described in
+\cite[Moolenaar02,Finseth91,Crowley98,Groom02,Sloman90,Payne90,Valdes93,Kernighan76,RitchieQEDImpl].
+
+\subsection
+  {Using fixed||size blocks of memory saves computer memory and can be
+   made to fit well with the hard||disk||drive||access policies of an operating
+   system.}
+
+This strategy is similar in many regards to the previous one.  However, instead
+of letting the contents of the buffer dictate the size of spans and memory
+allocations, the fixed size buffering strategy uses blocks of memory of a
+predetermined size.
+
+This size may depend on many factors, but is primarily affected by a hardware
+specification known as the \DefineTerm{disk block size}, which is the size of
+allocation blocks on a hard disk drive.  Choosing based on this value makes for
+many hardware||based advantages, which we’ll not discuss.  It’s enough to
+know that it makes the life of the operating system a lot easier.
+
+The number of blocks that are used per buffer will vary with its size.  It’s
+advantageous to keep the number of blocks down, for a couple of reasons:
+
+\startitemize
+  \item Less memory will be used
+
+  \item Fewer blocks to manage
+
+  \item The likelihood that an edit operation only affects one block increases
+\stopitemize
+
+To achieve this goal, a protocol dictating the minimum size of a span in its
+own block is necessary.  Usually, the rule is that half the block must be in
+use, or it will be coalesced with another block.
+
+The spans and blocks can be thought of as acting like the array strategy, where
+some extra amount of memory has been allocated at the end of the span for
+possible expansion.  Thus, edits to the spans are dealt with in the same
+manner as for that strategy.
+
+With the fixed size buffering strategy we need a second data structure to keep
+track of the spans and buffers.  The details aren’t important, but less stress
+is put on the structure for this strategy than for the line span strategy, as
+there will almost always be far fewer blocks of memory than lines in a buffer.
+
+\infigure[figure:fixed size buffering strategy] displays a buffer that has been
+divided into four spans and blocks.  All blocks are the same size, while the
+size of spans varies.
+
+\placefigure
+  []
+  [figure:fixed size buffering strategy]
+  {The fixed size buffering strategy.}
+  {\externalfigure[internal:fixed size buffering strategy]}
+
+The fixed size buffering strategy is quite effective but can benefit greatly
+from additional caching strategies. It’s used in quite a few text editors,
+perhaps the most noteworthy being \SAM\ \cite[Pike87].
+
+The fixed size buffering strategy is described in
+\cite[Pike87,Finseth91,Crowley98,Payne90,Valdes93].
+
+\subsection
+  [piece table buffering strategy]
+  {Breaking a buffer along the axis of edits that have been performed on the
+   it is an advanced but stunningly beautiful way of solving the buffering
+   problem.}
+
+% TODO: need to go over the exact terms here, specifically buffer and piece.
+Another possible way to split a buffer is to split it where edits occur.  We
+begin with one span, encompassing the whole buffer.  Whenever an insert or
+delete operation is performed, new spans are created to account for them.
+
+These spans are known as \DefineTerm[piece]{pieces}.  We need to manage these
+pieces in much the same way that we were required to do so for spans in the
+fixed size buffering strategy.  The data structure used to this end is referred
+to as a piece table.  It may be implemented in a number of ways, e.g., as a
+list or an array, but the specifics are irrelevant to our discussion in this
+subsection.
+
+The piece table buffering strategy requires that we use two memory strings: one
+for the original contents of the buffer ($w_{`original}$), and another one
+for inserted text ($w_{`added}$).  The first string is fixed in size and
+read||only, i.e., its content never changes.  The second string is unbounded in
+size and append||only, i.e., new content is only written at the end of it.  New
+pieces created as a result of editing operations will all point to this second
+string in memory.
+
+\infigure[figure:piece table buffering strategy] displays an example instance
+of a buffer being managed by this strategy.  The buffer is divided into five
+spans, two of which point to the original contents of the buffer and three that
+point to inserted content.
+
+\placefigure
+  []
+  [figure:piece table buffering strategy]
+  {The piece table buffering strategy.}
+  {\externalfigure[internal:piece table buffering strategy]}
+
+As already stated, we begin with one piece for the whole buffer.  An
+\Finsert\ operation is handled by splitting the piece containing point in
+three.  The first represents the part of the old piece that lay before point.
+The second represents the inserted symbol, which is appended to $w_{`added}$.
+The third represents the part of the old piece that lay after point.
+
+A \Fdelete\ operation is handled by splitting the piece containing point in
+two.  The first represents the part of the old piece that lay before point and
+the second the part that lay one symbol beyond point.
+
+For both operations there are special cases for when point lay on a piece
+boundary.  In these cases, the piece may be either shrunk or expanded,
+accordingly.
+
+As this is perhaps the buffering strategy that is hardest to understand, an
+example follows that tries to make the operation of this strategy clear.
+
+\startexample
+  Say that we have a buffer containing the quote \quotation{I want to believe}
+  from the television series \quotation{The X-Files} by Chris Carter
+  \cite[XFiles].  We would like to change it to instead read “I believe in
+  miracles”, to quote the Jackson Sisters’s hit single with the same name
+  \cite[Jackson73].  Finally, we alter it to quote Sinitta’s rebellious “I
+  Don’t Believe in Miracles” \cite[Sinitta88].
+
+  Our initial configuration can be seen in \infigure[figure:x-files buffer].
+  The original contents is all in $w_{`original}$ and will remain unchanged
+  through the following iterations.  $w_{`added}$ starts out empty, and $w$
+  is in this initial state equal to $w_{`original}$.  The piece table
+  contains only one piece, pointing to the whole of $w_{`original}$.
+
+  \placefigure
+    []
+    [figure:x-files buffer]
+    {Initial buffer with the “The X-Files” quote.}
+    {\startcombination[1*4]
+       {\externalfigure[internal:piece table example-original]} {$w_{`original}$}
+       {{\em (Empty)}} {$w_{`added}$}
+       {{\it I want to believe}} {$w$}
+       {\starttable[|l|r|r|]
+          \HL
+          \NC \bf Memory tring \VL \bf Offset \VL \bf Size \NC\AR
+          \HL
+          \NC $w_{`original}$ \VL  0 \VL 17 \NC\AR
+          \HL
+        \stoptable} {piece table}
+     \stopcombination}
+
+  % TODO: how do we typeset “I believe” here?
+  We now move point to position 3 and delete 8 symbols;
+  \infigure[figure:x-files buffer delete].  We are left with
+  $w = \text{\it I believe}$.  Note how $w_{`original}$ remains unchanged.
+  Only the piece table has been altered, where the sole piece from the piece
+  table in \infigure[figure:x-files buffer] has been split in two.
+
+  \placefigure
+    []
+    [figure:x-files buffer delete]
+    {Buffer after delete operations.}
+    {\startcombination[1*4]
+       {\externalfigure[internal:piece table example-original]} {$w_{`original}$}
+       {{\em (Empty)}} {$w_{`added}$}
+       {{\it I believe}} {$w$}
+       {\starttable[|l|r|r|]
+          \HL
+          \NC \bf Memory String \VL \bf Offset \VL \bf Size \NC\AR
+          \HL
+          \NC $w_{`original}$ \VL  0 \VL  2 \NC\AR
+          \NC $w_{`original}$ \VL 10 \VL  7 \NC\AR
+          \HL
+        \stoptable} {piece table}
+     \stopcombination}
+
+  Once we’ve completed our deletions, we move point to the end of the now nine
+  symbol long buffer.  Once there, we insert the symbols constituting the
+  string “ in miracles”.  We wind up with a configuration like that in
+  \infigure[figure:x-files buffer insert 1].  Note how all of the inserted text
+  has been placed in $w_{`added}$ and a piece pointing to it has been added to
+  the piece table.
+
+  \placefigure
+    []
+    [figure:x-files buffer insert 1]
+    {Buffer after first sequence of inserts.}
+    {\startcombination[1*4]
+       {\externalfigure[internal:piece table example-original]} {$w_{`original}$}
+       {\externalfigure[internal:piece table example-added in miracles]} {$w_{`added}$}
+       {{\it I believe in miracles}} {$w$}
+       {\starttable[|l|r|r|]
+          \HL
+          \NC \bf Memory String \VL \bf Offset \VL \bf Size \NC\AR
+          \HL
+          \NC $w_{`original}$ \VL  0 \VL  2 \NC\AR
+          \NC $w_{`original}$ \VL 10 \VL  7 \NC\AR
+          \NC $w_{`added}$    \VL  0 \VL 12 \NC\AR
+          \HL
+        \stoptable} {piece table}
+     \stopcombination}
+
+  To complete our example, we move point again to position 3 and insert the
+  remaining symbols.  The inserted text has been appended to $w_{`added}$.
+  Note how the contents of $w_{`added}$ makes little sense, yet that of $w$
+  certainly does; and $w_{`original}$ still remains unchanged.
+
+  \placefigure
+    []
+    [figure:x-files buffer insert 2]
+    {Buffer after second sequence of inserts.}
+    {\startcombination[1*4]
+       {\externalfigure[internal:piece table example-original]} {$w_{`original}$}
+       {\externalfigure[internal:piece table example-added don't]} {$w_{`added}$}
+       {{\it I don't believe in miracles}} {$w$}
+       {\starttable[|l|r|r|]
+          \HL
+          \NC \bf Memory String \VL \bf Offset \VL \bf Size \NC\AR
+          \HL
+          \NC $w_{`original}$ \VL  0 \VL  2 \NC\AR
+          \NC $w_{`added}$    \VL 12 \VL  6 \NC\AR
+          \NC $w_{`original}$ \VL 10 \VL  7 \NC\AR
+          \NC $w_{`added}$    \VL  0 \VL 12 \NC\AR
+          \HL
+        \stoptable} {piece table}
+     \stopcombination}
+
+  It doesn’t get much more difficult than that in fact.  We haven’t shown
+  explicitly any of the possible “border cases” here, where an insert or delete
+  is performed on a piece boundary, although the initial sequence of deletes
+  where instances of this behavior.  We do, however, feel that such cases are
+  easy enough to understand that further examples involving them are
+  unwarranted.
+\stopexample
+
+The benefits of the piece table strategy are numerous:
+
+\startitemize
+  \item When the original contents originates from a file on disk, we never
+    need to consider modifying this file, leaving it in a read||only access
+    state.  This has several advantages:
+    \startitemize
+      \item We don’t have to have whole contents of the file in memory; only
+        parts currently being edited need to be in memory.
+      \item Operating system caching features can be utilized to the maximum, as
+        the file’s contents never changes.
+      \item It simplifies the file handling, as the origin of data is always the
+        same.
+    \stopitemize
+
+  \item The handling of modifications to $w_{`added}$ operates under an
+    “append||only” regime, where new data is only written to the end
+    of it.  So, once something is written to it, it’ll never change.
+
+  \item The two previous points together imply that other data structures may
+    point to data in these memory strings without (necessarily) interfering
+    with the piece table or having to worry about updates to the data.  The
+    usefulness of this property isn’t immediately obvious, but eases the
+    implementation of many advanced features (perhaps) to be added at a later
+    stage.
+
+  \item The undo|/|redo||facility can be implemented with ease.  In simple
+    terms, all it needs to do is keep track of the appropriate pieces in a
+    separate table.  (We haven’t discussed the implemenation of undo|/|redo in
+    the other buffering strategies.  Suffice to say, they require keeping a
+    great deal of additional information around.)
+
+  \item When loading a buffer with data from a file on disk, no preprocessing
+    of the data is necessary|<|such as splitting the representation into spans
+    of lines, as for the line span buffering strategy|>|nor does the size of
+    the file matter, as it needn't all be loaded at once (see point 1).
+
+  \item Again, the amount of memory required for a buffer is only a function of
+    the number of edits performed on it (in storing the piece table) not the
+    size of the original data.
+\stopitemize
+
+The main drawback of the piece table strategy is that the amount of memory
+required for a buffer is a function of the number of edits performed on it in
+storing the piece table.  This leads to certain issues when the number of edits
+performed is large, as the piece table may be huge and thus a lot of time may
+be required to find the right piece when performing an edit.
+
+This drawback may, however, be adequately solved by using a more advanced data
+structure for keeping the piece table.  We’ll later describe an
+implementation that guarantees $\Ordo{\lg n}$ worst||time access to a piece,
+which is more than adequate.  % TODO: (\SeeSection{...}).
+
+The piece table buffering strategy is used in the AbiWord word processor
+\cite[AbiWordManual].
+
+The piece table buffering strategy is described in
+\cite[Crowley98,AbiWordDoc,Catch22a,Catch22b,Abela03].
+
+The next section gives an overview of the asymptotic properties of the various
+operations on buffers maintained by the buffering strategies discussed in the
+previous subsections.
+
+\subsection{A Comparison of Buffering Strategies}
+
+It’s now time to discuss the different properties that the buffering strategies
+introduced in the previous subsections enjoy and also the problems they suffer
+from.
+
+It’s desirable to categorize the buffering strategies somehow, to make
+inter||category similarities and intra||category differences protrude.  The
+categorization used here is due to the differences in the use of spans in the
+buffering strategies.  We have three categories: (1) Basic, (2) Intermediate,
+and (3) Advanced.
+
+The {\em basic} buffering strategies are those that use {\em a fixed number of
+spans}.  These are the {\em array} and {\em gap} buffering strategies.  The
+first uses one span that spans the whole buffer.  The second, two spans that
+together span the whole buffer.
+
+As there are only a fixed number of spans in the basic buffering strategies, no
+additional data structure is necessary to keep track of the spans.  This
+implies that no additional memory is consumed by such a data structure, making
+memory consumption a factor only of the size of the contents of the buffer.
+Furthermore, as there is no additional data to keep track of, the
+implementation of these buffering strategies is straightforward and easy to
+comprehend.
+
+The {\em intermediate} buffering strategies are those that use {\em a
+variable number of spans, but no additional data structure}.  The only
+buffering strategy in this category that has been discussed in this section is
+the {\em line span} buffering strategy.  In the line span buffering strategy,
+a span is used for each line in the buffer.  As each line is linked to the
+next, maintenance of the spans is implicit in the buffering strategy itself.
+Thus, no additional data structure is needed.  The links between the lines do,
+however, require some additional memory to store.  Thus, the memory consumption
+is both a factor of the size of the buffer and the number of lines in it.
+
+The {\em advanced} buffering strategies are those that use {\em a variable
+number of spans, requiring an additional data structure}.  These are the {\em
+fixed size} and {\em piece table} buffering strategies.  The first uses fixed
+size blocks of memory to house spans of the buffer.  The second creates spans
+as edit operations are performed on the buffer.
+
+Both of the advanced buffering strategies require an additional data structure
+to keep track of the spans that are created and destroyed as the buffer
+changes.  The data structure used is often a list, a binary tree of some
+kind, e.g., a red-black tree \cite[Bayer72a,Sedgewick78]\ or a B\high{+}-tree
+\cite[Bayer72b,Comer79,Knuth97]\ or even to use one of the buffering strategies
+described above for this task as well\footnote{Albeit, this may be a bit too
+schizophrenic for some\dots}.  The choice of data structure greatly affects
+both the memory consumption of and the speed at which operations may be
+performed on the buffer.  It’s also worth noting that the number of spans used
+by the fixed size buffering strategy varies little throughout the changes to
+the buffer, while it varies greatly with the piece table buffering strategy.
+Thus, the choice of data structure for one will often not be optimal for the
+other.  The memory consumption of the fixed size buffering strategy is thus
+both a factor of the size of the buffer, the data structure used to maintain
+spans, and the way the memory blocks are handled and how filled they are.  For
+the piece table buffering strategy, it’s a factor of the number of edits
+performed on the buffer only, as previously discussed
+(\insection[piece table buffering strategy]).
+
+Now that the buffering strategies have been categorized, it’s time to show and
+discuss their asymptotic properties.  \intable[table:buffering strategy times]\
+provides an overview of the time required to perform the four editing
+operations on a buffer that have been presented for the five strategies.  For
+the array and gap strategies, $n = |w|$.  For the line span strategy, $n$ is
+the number of lines in the buffer, i.e., the number of new||line symbols in
+$w$.  For the fixed size strategy, $n$ is the number of spans used.  This is a
+factor of both the length of the buffer and the disk block size.  For the piece
+table strategy, $n$ is the number of pieces, which (again) is a factor of the
+number of edits that have been performed on the buffer.
+
+The times presented aren’t definite, merely suggesting expected values.  No
+proofs are provided, only suggestions to why the times listed make sense are
+given.
+
+Furthermore, the times are greatly affected by the editing patterns on a
+buffer, especially the locality of edit operations.  Editing operations that
+are performed close to one another tend to perform several magnitudes faster
+than operations performed at random locations in a buffer.  This fact is the
+result of the way memory handling in the computer is performed, the way in
+which spans are handled, and how caching is performed.  The specifics aren’t
+discussed here, as it’s enough to know that times represented here are only to
+be used as a general guide.
+
+\placetable
+  []
+  [table:buffering strategy times]
+  {Asymptotic Times of Editing Operations per Buffering Strategy}
+  \starttable[|l|c|c|c|c|c|]
+  \HL
+  \NC \bf Operation \VL\FIVE{\bf Strategy}                                                                  \NC\AR
+  \DC               \DL[5]                                                                                     \DR
+  \NC               \VL Array     \VL Gap                 \VL Line Span \VL Fixed Size    \VL Piece Table   \NC\AR
+  \HL
+  \NC {\it symbol||at}  \NC \Ordo{1}  \NC \Ordo{1}            \NC \Ordo{n}  \NC \Ordo{\lg n}  \NC \Ordo{\lg n}  \NC\AR
+  \NC {\it move||to}    \NC \Ordo{1}  \NC \Ordo{n}|/|\Ordo{1} \NC \Ordo{n}  \NC \Ordo{\lg n}  \NC \Ordo{\lg n}  \NC\AR
+  \NC {\it insert}      \NC \Ordo{n}  \NC \Ordo{n}|/|\Ordo{1} \NC \Ordo{1}  \NC \Ordo{1}      \NC \Ordo{1}      \NC\AR
+  \NC {\it delete}      \NC \Ordo{n}  \NC \Ordo{n}|/|\Ordo{1} \NC \Ordo{1}  \NC \Ordo{1}      \NC \Ordo{1}      \NC\AR
+  \HL
+  \stoptable
+
+What follows are short explanations to the timings in
+\intable[table:buffering strategy times]:
+
+\subsubsubject{Array}
+
+\term{\Fsymbolat} Memory lookup: $\Ordo{1}$.
+
+\term{\Fmoveto} Simple assignment: $\Ordo{1}$.
+
+\term{\Finsert} Memory reallocation, $\Ordo{n}$, and move of memory,
+  $\Ordo{n}$: $\Ordo{n}$.
+
+\term{\Fdelete} Move of memory: $\Ordo{n}$.
+
+\subsubsubject{Gap}
+
+\term{\Fsymbolat} Determine span, $\Ordo{1}$, and memory lookup, $\Ordo{1}$:
+  $\Ordo{1}$.
+
+\term{\Fmoveto} Either move of gap and thus memory, $\Ordo{n}$, or simple
+  assignment, $\Ordo{1}$.
+
+\term{\Finsert} First time since point moved will be $\Ordo{n}$ if gap needs to
+  be moved.  Subsequent calls will be a simple assignment, $\Ordo{1}$.  If gap
+  has been filled, a new one is required, so memory reallocation, $\Ordo{n}$,
+  and a move of memory, $\Ordo{n}$, will be required.
+
+\term{\Fdelete} Gap length needs adjusting, a simple assignment: $\Ordo{n}$.
+
+\subsubsubject{Line Span}
+
+\term{\Fsymbolat} Finding the line containing symbol requires all lines to be
+  traversed: $\Ordo{n}$.
+
+\term{\Fmoveto} Finding the line containing the offset to move to requires all
+  lines to be traversed: $\Ordo{n}$.
+
+\term{\Finsert} Depends on buffering strategy for lines, but can be assumed to
+  be amortized to $\Ordo{1}$.
+
+\term{\Fdelete} Same as for \Finsert.
+
+\subsubsubject{Fixed Size}
+
+\term{\Fsymbolat} Depends on data structure used to manage spans, best case
+  being $\Ordo{\lg n}$, as we need to find the span containing the given
+  offset.  With caching on the spans found (so that subsequent calls to
+  symbol||at where the offset is in the same span as for a previous call) this
+  will aggrade to $\Ordo{1}$.
+
+\term{\Fmoveto} Same as for \Fsymbolat.
+
+\term{\Finsert} Depends on buffering strategy for memory blocks, but can be
+  assumed to be amortized to $\Ordo{1}$.  If a memory block becomes full, some
+  memory reallocation and movement of memory will take place.  This is rare
+  enough not to affect the amortized asymptotic time of this operation.
+
+\term{\Fdelete} Same as for \Finsert, but memory movement may be result of a
+  memory block becoming empty and thus being removed.
+
+\subsubsubject{Piece Table}
+
+\term{\Fsymbolat} Depends on data structure used to manage spans, best case
+  being $\Ordo{\lg n}$.  Again, with caching on found spans, this will aggrade
+  to $\Ordo{1}$.  (Remember, $n$ is the number of pieces, not $|w|$.)
+
+\term{\Fmoveto} Same as for \Fsymbolat.
+
+\term{\Finsert} Either add a new piece, $\Ordo{1}$, or extend an already
+  existing piece's length, also $\Ordo{1}$.
+
+\term{\Fdelete} Either split a piece, $\Ordo{1}$, or shorten an already
+  existing piece, also $\Ordo{1}$.
+
+\subsection{Choosing the right buffering strategy for the task.}
+
+The choice of buffering strategy depends on many factors, the timings of
+editing operations being but one.  Memory consumption and memory patterns are
+often of equal weight.  Heaviest, however, is the actual intended use of the
+buffering strategy, i.e., what types of buffers we are going to be
+editing~--~short buffers have different needs and requirements from those of
+long ones.
+
+The array buffering strategy is overall too slow when a lot of altering
+operations (\Finsert, \Fdelete) are performed on the buffer.  It works fine for
+short buffers, where only a few changes are going to be made, such as a
+user||input prompt like the one presented in \infigure[figure:user input
+prompt].  Here, the user will type in a user name and a password, which are
+rarely longer than ten symbols; changes will only be done to fix typos.
+
+\placefigure
+  []
+  [figure:user input prompt]
+  {Simple User||Input Prompt}
+  {\externalfigure[internal:user input prompt]}
+
+The gap buffering strategy solves the problem with slow insertions and deletes
+that are inherit in the array buffering strategy, except for pathological cases
+where all insertions and deletes are performed far from each other (in which
+case it may actually perform worse).  It is very simple, both to understand and
+to implement.  The main problem is that it utilizes only one memory block,
+which can cause some problems with memory allocation in the operating system.
+So, this strategy is ideal for buffers of a short to medium length where heavy
+(but not too random) editing is expected.  It is also well suited for keeping
+the line spans in the line span buffering strategy or the memory blocks of the
+fixed size buffering strategy.  Beyond that, a strong selling||point is that it
+has been used so often in the past.
+
+The line span buffering strategy is designed to deal well with the concept of
+individual lines in a buffer.  It thus fits well with editors that tend to deal
+with lines as the working||unit a lot.  It works best with buffers of not too
+many not too long lines, as the time taken for the operations depend on these
+factors.  It has been argued that the line span buffering strategy suffers from
+memory access pattern problems \cite[Payne90]\ and the fact that preprocessing
+necessary in splitting the buffer up into lines can be cost||some makes it
+unpopular with some.  Still, it’s conceptually simple and doesn’t require
+additional data structures as the following two do.
+
+The fixed size buffering strategy agrees well with the operating system of the
+computer, as it lets it dictate how memory is used.  This can be very
+beneficial as problems related to memory are minimized in this respect.
+However, this strategy requires an additional data structure to keep track of
+the spans and memory utilization may be sub||optimal, as the memory blocks
+storing the contents of spans may be under||utilized.
+
+The piece table buffering strategy is a simple, albeit not very intuitive, way
+to keep track of the contents of a buffer.  It’s blindingly fast under most
+circumstances, using appropriate data structures for keeping track of spans and
+performing caching.  It degrades well enough as edits are performed and doesn’t
+consume excessive amounts memory, even for excessively large files on disk.  It
+thus works well with buffers of any size and form.
+
+The piece table strategy is perhaps the one that has been used least in the
+past, and then mostly for word processors.  Still, it has many positive
+features and deserves further exploration.
+
+% TODO: need to write output routine stuff
+
+\stopcomponent

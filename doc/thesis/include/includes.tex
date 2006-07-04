@@ -1,0 +1,108 @@
+\startenvironment include/includes
+
+\enableregime[utf]
+
+% FIXME: hack until this file is included in ConTeXt
+\input unic-033
+\useunicodevector[33,34,39]
+
+\usemodule[bib]
+\usemodule[bnf]
+\usemodule[chart]
+\usemodule[nath]
+
+\startMPinclusions
+input boxes;
+input mp-text;
+input nw-dgraphs;
+input nw-trees;
+\stopMPinclusions
+
+\input verb-c
+%\input verb-rby
+\input verb-pseudo
+
+\setupexternalfigures[directory={../thesis/figures}]
+
+
+
+\useexternalfigure[definitions:relationship][definitions/definitions.1]
+\useexternalfigure[definitions:finite automaton][definitions/definitions.2]
+\useexternalfigure[definitions:even zeros dfa][definitions/definitions.3]
+\useexternalfigure[definitions:even zeros dfa ex-1][definitions/definitions.4]
+\useexternalfigure[definitions:even zeros dfa ex-2][definitions/definitions.5]
+\useexternalfigure[definitions:even zeros dfa ex-3][definitions/definitions.6]
+\useexternalfigure[definitions:even zeros dfa ex-4][definitions/definitions.7]
+\useexternalfigure[definitions:even zeros dfa ex-5][definitions/definitions.8]
+\useexternalfigure[definitions:epsilon decimal numbers nfa][definitions/definitions.9]
+\useexternalfigure[definitions:simple tnfa][definitions/definitions.10]
+\useexternalfigure[definitions:ascii character set lookup][definitions/definitions.11]
+
+\useexternalfigure[construction:thompson atoms-epsilon][construction/construction.1]
+\useexternalfigure[construction:thompson atoms-symbol][construction/construction.2]
+\useexternalfigure[construction:thompson alternation][construction/construction.3]
+\useexternalfigure[construction:thompson concatenation][construction/construction.4]
+\useexternalfigure[construction:thompson closure][construction/construction.5]
+\useexternalfigure[construction:thompson example ast][construction/construction.6]
+\useexternalfigure[construction:thompson example 0-1][construction/construction.7]
+\useexternalfigure[construction:thompson example 1-1][construction/construction.8]
+\useexternalfigure[construction:thompson example 1*][construction/construction.9]
+\useexternalfigure[construction:thompson example 0-2][construction/construction.10]
+\useexternalfigure[construction:thompson example 1*0][construction/construction.11]
+\useexternalfigure[construction:thompson example 01*0][construction/construction.12]
+\useexternalfigure[construction:thompson example 1-2][construction/construction.13]
+\useexternalfigure[construction:thompson example 01*0or1][construction/construction.14]
+\useexternalfigure[construction:thompson example (01*0or1)*][construction/construction.15]
+\useexternalfigure[construction:thompson example][construction/construction.16]
+\useexternalfigure[construction:tnfa tag][construction/construction.17]
+\useexternalfigure[construction:curly tnfa][construction/construction.18]
+\useexternalfigure[construction:worst-case tnfa for tagged epsilon-closure][construction/construction.19]
+
+\useexternalfigure[vim startup][vim/start-up]
+\useexternalfigure[vim insert-0][vim/insert-0]
+\useexternalfigure[vim insert-1][vim/insert-1]
+\useexternalfigure[vim insert-2][vim/insert-2]
+\useexternalfigure[vim insert-3][vim/insert-3]
+\useexternalfigure[vim delete-1][vim/delete-1]
+\useexternalfigure[vim move-1][vim/move-1]
+\useexternalfigure[vim move-2][vim/move-2]
+
+% TODO: should use automatic scaling here .3\textwidth and so on
+\useexternalfigure[internal:ergonomic keyboard][internal/ergonomic-keyboard.png]
+\useexternalfigure[internal:teletype][internal/ken-and-dennis-at-a-pdp-11.jpg][factor=fit]
+\useexternalfigure[internal:ergonomic mouse left][internal/mouse-left.png][scale=800]
+\useexternalfigure[internal:ergonomic mouse top][internal/mouse-top.png][scale=800]
+\useexternalfigure[internal:ergonomic mouse right][internal/mouse-right.png][scale=800]
+\useexternalfigure[internal:array buffering strategy][internal/internal.1]
+\useexternalfigure[internal:gap buffering strategy][internal/internal.2]
+\useexternalfigure[internal:line span buffering strategy][internal/internal.3]
+\useexternalfigure[internal:fixed size buffering strategy][internal/internal.4]
+\useexternalfigure[internal:piece table buffering strategy][internal/internal.5]
+\useexternalfigure[internal:piece table example-original][internal/internal.6]
+\useexternalfigure[internal:piece table example-added in miracles][internal/internal.7]
+\useexternalfigure[internal:piece table example-added don't][internal/internal.8]
+\useexternalfigure[internal:user input prompt][internal/user-input-prompt.png][scale=800]
+
+\useexternalfigure[vim:search-1][vim/search-1]
+\useexternalfigure[vim:search-2][vim/search-2]
+\useexternalfigure[vim:movement-1][vim/movement-1]
+\useexternalfigure[vim:movement-2][vim/movement-2]
+\useexternalfigure[vim:addressing-1][vim/addressing-1]
+\useexternalfigure[vim:addressing-2][vim/addressing-2]
+\useexternalfigure[vim:repeating-1][vim/repeating-1]
+\useexternalfigure[vim:repeating-2][vim/repeating-2]
+\useexternalfigure[vim:substitution-1][vim/substitution-1]
+\useexternalfigure[vim:substitution-2][vim/substitution-2]
+
+\useexternalfigure[source:piecetree:rotate left (before)][source/piecetree.1]
+\useexternalfigure[source:piecetree:rotate left (after)][source/piecetree.2]
+\useexternalfigure[source:piecetree:rotate right (before)][source/piecetree.3]
+\useexternalfigure[source:piecetree:rotate right (after)][source/piecetree.4]
+
+\useexternalfigure[source:patternmatcher:functions - alternation][source/patternmatcher.1]
+\useexternalfigure[source:patternmatcher:functions - concatenation][source/patternmatcher.2]
+\useexternalfigure[source:patternmatcher:functions - closure][source/patternmatcher.3]
+
+%\usepath[include]
+
+\stopenvironment

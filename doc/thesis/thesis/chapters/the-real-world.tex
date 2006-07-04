@@ -1,0 +1,383 @@
+\startcomponent thesis/chapters/the-real-world
+
+\project masters-project
+\product thesis
+
+\chapter
+  [the real world]
+  {Regular Expressions and The Real World}
+
+
+This chapter is about using regular expressions to solve problems that occur in
+{\em The Real World}.  We’ll take a look at how we transfer regular expression
+syntax to a limited alphabet, common extensions to this syntax, and also at
+some applications of regular expressions.
+
+
+\section{Operators and Escaping}
+
+In \insection[definitions:regular expressions] we gave a syntax for regular
+expressions using the symbols $|$, $∗$, $($, and $)$|<|which were not part of
+any alphabet used|>|as our operators.  While we can reason about regular
+expressions using these symbols without ambiguity, in {\em The Real World} our
+alphabet is generally limited in some sense, e.g., to the \ASCII\ or \Unicode\
+character set (\insection[definitions:character encodings]).
+
+If we represent the operator symbols by their most logical mapping onto the
+\Unicode\ character set, namely \CodePoint{007C} (\type{|}), \CodePoint{002A}
+(\type{*}), \CodePoint{0028} (\type{(}), and \CodePoint{0029} (\type{)}), we
+have no way of representing these characters as themselves in a regular
+expression.  Thus, we need some way to put these symbols in a regular
+expression without them being interpreted as operators.  As we cannot generally
+assign new code points to the same characters as we are going to use as our set
+operators (the \Unicode\ Standard simply will not allow this), we have to
+define some kind of escape method that disables the interpretation of a
+character as an operator.
+
+An almost universal non||standard in computing is to perform character escaping
+by preceding the character in question with a backslash (\type{\}) and to use a
+sequence of two backslashes (\type{\\}) to represent a single one.  This is the
+solution employed by most computer software that deals with regular expressions
+as well.  There are alternatives schemes used, but they are mostly found in
+non||interactive software, such as in defining lexical scanners
+\cite[Paxson95]\ or programming language grammars \cite[Forsberg03].
+
+To complicate matters, the interpretation of the escaping operation is not
+always as suggested above, i.e., to {\em not} treat the character as an
+operator, but instead to treat the next character as an operator instead of
+as a normal symbol.  Therefore, when we want to pass the regular expression
+$(a \Alt b \Alt c)$ to the \UNIX\ command \Command{grep}, we write it as
+\TypedRegex{\(a\|b\|c\)}.  This is known as the
+\index{Regular Expression Syntax+Basic}\Term{Basic Regular Expression
+Syntax}, or \BRE.  However, when we want to pass the same regular
+expression to the \UNIX\ command \Command{egrep} \cite[McIlroy86,POSIX92], we
+instead write it as \TypedRegex{(a|b|c)}.  This is known as the \index{Regular
+Expression Syntax+Extended}\Term{Extended Regular Expression Syntax}, or \ERE.
+If we instead wanted to pass the regular expression matching the actual
+characters comprising it, we would swap them.
+
+\placeintermezzo
+  []
+  [intermezzo:grep and egrep]
+  {Explanation of the \Command{grep} and \Command{egrep} commands.}
+  \startframedtext
+    The \UNIX\ commands \Command{grep} and \Command{egrep} deserve some further
+    discussion.  They are utilities for finding lines of text matching a given
+    regular expression in a set of files.  They are invoked at a computer
+    terminal running \UNIX\ as follows:
+    \startlines
+    \type{% grep} \<regular expression> \<file name>\dots
+    \stoplines
+    Here the contents of each file \<file name> (the ellipsis signifies that
+    any number of names of files may follow) will be matched against the
+    regular expression \<regular expression>.  That is to say, the contents is
+    not treated as a single unit, rather multiple starting points are tried, so
+    that the finite automaton that \Command{grep}/\Command{egrep} employs will
+    be called upon at all possible places where it has yet to be tried for a
+    match.  A simpler way of stating this is to say that \<regular expression>
+    is augmented by prefixing it with the regular expression \TypedRegex{.*} so
+    that it becomes \TypedRegex{.*}\<regular expression>.  The finite automaton
+    is also told to report an accepting configuration as soon as an accepting
+    state is reached, i.e., not all input must be consumed for the automaton to
+    be successful. The \TypedRegex{.} operator matches anything in the input,
+    and is discussed further in \insection[any operator].  Searching text for
+    patterns are covered in \inchapter[patterns], \at{page}[patterns].
+  \stopframedtext
+
+Both \BRE\ and \ERE\ are defined in the \POSIX\ standard \cite[POSIX92]\ and
+are used by many tools belonging to computer systems adhering to this standard.
+We will from now on use the \ERE\ syntax whenever we discuss regular
+expressions used on a computer, unless otherwise stated.
+
+
+\section{Common Extensions}
+
+The three operators|<|with concatenation being implicit|>|and subexpression
+grouping that we have defined for regular expressions are powerful enough to
+represent any finite automaton.  It is, however, painful to write any but the
+simplest of regular expressions using only these operators.  For this reason, a
+lot of extensions to the regular expression grammar have been made over time to
+ease their use in everyday application.  This section tries to highlight some
+of the most often occurring ones.  It is, again, vital to note that none of
+these extensions increase the expressive power of the underlying regular
+expression (they all maintain the regularity of it), only making for more
+succinct ones.  But, as \Name{Paul}{Graham} will tell you \cite[Graham02],
+succinctness {\em is} power.
+
+\subsection
+  [any operator]
+  {The “any character” character that matches any character.}
+
+The character \TypedRegex{.} stands for the notion of {\em any character}.
+Formally, for an alphabet $Σ$, \TypedRegex{.} matches the language
+$L = Σ^1$, i.e., the set of all strings of length one over the alphabet
+$Σ$. This means that the regular expression \TypedRegex{...} will match any
+string of length three in the input alphabet.  It is an idiom to match a
+sequence of any number of characters using \TypedRegex{.*}.
+
+\subsection
+  [character ranges]
+  {Character ranges provide a way to express complex ranges of characters.}
+
+It’s often useful to have a set of characters that may be accepted at a given
+point in a regular expression.  Therefore, the sequence
+\type{[}$a_1 a_2 \dots a_n$\type{]}, for $n ≥ 1$ and where each $a_1$,~$a_2$,
+\dots,~$a_n$ is one of
+
+\startitemize
+  \item a single character, $x$, matching itself;
+
+  \item the sequence $x$\type{-}$y$, where $x$ and $y$ are characters and
+    $x ≤ y$, matching any character $c$ in the range
+    $\Fcodepoint(x) ≤ c ≤ \Fcodepoint(y)$; or
+
+  \item a \POSIX\ character class,
+\stopitemize
+
+is equivalent to the regular expression $(a_1 \Alt a_2 \Alt \dots \Alt a_n)$,
+where each $x$\type{-}$y$ range has, in turn, been expanded to
+$(x \Alt \dots \Alt y)$ and each \POSIX\ character class has been expanded to
+the union of all characters in the given class.
+
+Finally, as a special case, if $a_1$ is \type{^}, the character range will
+represent the negation of its contents.  Thus, if the alphabet is $Σ$, the
+character range will match
+
+  \[Σ \setminus \{a_1, a_2, \dots, a_n\},\]
+
+where each $x$\type{-}$y$ range and \POSIX\ character class among $a_1$,~$a_2$,
+\dots,~$a_n$ has been expanded in||place to the characters they contain.
+
+We haven’t explained what \POSIX\ character classes are yet, so let’s do so
+now.  A \index[POSIX character class]{\POSIX\ character class}\Term{\POSIX\
+character class} is an expression delimited by \type{[:}, \type{:]} pairs
+inside a character range.  The possible values are
+
+\startitemize[columns,four]
+  \nop \type{[:alnum:]},
+  \nop \type{[:alpha:]},
+  \nop \type{[:blank:]},
+  \nop \type{[:cntrl:]},
+  \nop \type{[:digit:]},
+  \nop \type{[:graph:]},
+  \nop \type{[:lower:]},
+  \nop \type{[:print:]},
+  \nop \type{[:punct:]},
+  \nop \type{[:space:]},
+  \nop \type{[:upper:]},
+  \nop \type{[:xdigit:]}.
+\stopitemize
+
+These expressions match a locale||dependent set of characters/code points.
+This fact makes them very useful when the exact set of characters is
+well||defined in this way.
+
+\placeintermezzo
+  {Further extensions to character ranges defined by \POSIX.}
+  \startframedtext
+    \POSIX\ also adds what is known as \DefineTerm{collation elements} and
+    \DefineTerm{equivalence classes} to character ranges, which are useful for
+    internationalization purposes.  Their syntax and semantics are, however,
+    ill||defined and are rarely, if ever, used.  Therefore, we will simply
+    ignore them.
+  \stopframedtext
+
+There are a few border cases in this mini||language of regular expressions to
+be dealt with.  For example, how do we represent \type{-} and \type{]} in it?
+We will, however, not go into details on how different implementations solve
+this, as few agree as to how it should be done and these specifics are
+irrelevant to our discussion.
+
+It should be noted that these kinds of character ranges were thought of when
+most of the computer world were using the \ASCII\ character set, not the
+\Unicode\ one.  \Unicode\ complicates matters somewhat, and it is often hard to
+use $x$\type{-}$y$ ranges successfully.  A common idiom, under \ASCII, is to
+use the expression \TypedRegex{[A-Z]} to match an upper||case letter.
+Under \Unicode, the notion of upper||case letter is not as simple as “all the
+characters between ‘A’ and ‘Z’\thinspace”.  There are title||cased letters,
+many different scripts not all based on the Latin one, and some scripts do not
+even have the notion of upper||case and lower||case.  Thus, some \cite[Wall02]\
+consider character ranges a thing of the past, best restricted to cases where
+the exact range of characters to match is well defined\footnote{Such as in an
+\RFC\ 822 \cite[RFC822]\ compliant header field, where only \ASCII\ characters
+between codepoints 33 through 126, excluding colon at 58, are allowed by the
+standard.}.
+
+To complicate|<|or perhaps simplify|>|matters somewhat,
+\TypedRegex{[}\dots\TypedRegex{]} works the same way in both \BRE\ and \ERE,
+i.e., no escaping is necessary in either syntax.
+
+\subsection
+  [iteration shorthands]
+  {The closure operator, \TypedRegex{*}, is arguably the most powerful operator
+   of regular expressions, but additional control over it makes it easier to
+   use.}
+
+Often you will want the closure of a regular expression, and thus
+\TypedRegex{*} fits the bill very well.  It does, however, happen that you want
+a bit more fine||grained control over exactly how many times the concatenation
+may take place.  A syntax has grown out of this need to represent some of the
+most often occurring cases and they are listed here.
+
+\startitemize
+  \item $r$\TypedRegex{?} is equivalent to $ε \Alt r$, i.e., “zero or one
+  repetitions of $r$”.
+
+  \item $r$\TypedRegex{+} is equivalent to $rr^∗$, i.e., “one or more
+  repetitions of $r$”.
+
+  \item $r$\TypedRegex/{/$n$\TypedRegex{,}$m$\TypedRegex/}/ is equivalent to
+
+    \[\underbrace{\mathstrut rr\dots r}_{n \text{ times}}
+      \underbrace{\mathstrut (ε|r)(ε|r)\dots(ε|r)}_{m - n\text{ times}},\]
+
+    i.e., “$n$ to $m$ repetitions of $r$”.  Either $n$ or $m$ (and sometimes
+    both) can often be left out.  If $n$ is left out, it defaults to $0$.  If
+    $m$ is left out, it defaults $∞$, and the right sequence in the formula
+    above is replaced by $r^∗$.  Thus, if both $n$ and $m$ are left out,
+    $r$\TypedRegex/{,}/ (where the comma (\TypedRegex{,}) may often be left
+    out) is equivalent to $r$\TypedRegex{*}: the closure of $r$.  Finally, if
+    $m$ and the comma (\TypedRegex{,}) are left out, leaving only $n$, then $m$
+    is taken to be equal to $n$.
+\stopitemize
+
+The \TypedRegex/{/$n$\TypedRegex{,}$m$\TypedRegex/}/ operator is generally not
+available in tools that use the \BRE\ syntax.  When it is, what’s escaped
+often differs.  Some escape only the initial \TypedRegex/{/, others escape both
+delimiters.  A further discussion of the theoretical ramifications of the
+introduction of this operator can be found in \cite[Kilpelainen03].
+
+\subsection
+  {Technically only useful when doing pattern matching, assertions provide a
+   way to match the position of the input cursor.}
+
+\Note The following operators will make more sense when we look at how regular
+expressions are generally applied to the task of searching text for matches.
+We include them here, however, as they fit better under the current section
+heading.  You may skim over the contents of this subsection and return to it
+when necessary.
+
+An assertion operator makes some kind of assertion about the current position
+in the input that is being matched.  When searching an input string, regular
+expressions are often tried for a match at every possible point in the input
+and thus the regular expression \TypedRegex{second} will match the substring
+starting at the seventh position and ending at the twelfth position in the
+string \TypedString{first \REMatch{second} third}.
+
+This is where assertions are useful.  They match a position in the input,
+rather than a character. \intable[table:assertion operators] lists the
+operators along with the position that they match.  There are some alternatives
+to this syntax and further extensions to this scheme; their purpose often being
+to disambiguate the meanings of the ambiguously defined operators.
+
+\placetable
+  []
+  [table:assertion operators]
+  {Assertion Operators}
+  \starttable[|l|lp(27em)|]
+  \HL
+  \NC \bf Operator \NC \bf Matches \NC\AR
+  \HL
+  \NC \TypedRegex{^} \NC
+    Start of the input or at start of any line within it: \TypedRegex{^here}
+    matches \TypedString{\REMatch{here} or there} but not
+    \TypedString{adhere to}. \NC\AR
+  \NC \TypedRegex{$} \NC %$
+    End of the input or at end of any line within it: \TypedRegex{there$} %$
+    matches \TypedString{here or \REMatch{there}} but not
+    \TypedString{there’s}. \NC\AR
+  \NC \TypedRegex{\b} \NC
+    At a word boundary.  A word boundary is usually defined as the position
+    right before an alphanumeric character following (a) white||space, (b) the
+    beginning of a line, (c) the beginning of the input, or right after an
+    alphanumeric character followed by (d) the end of a line, or (e) the end of
+    the input.  So \TypedRegex{\bword\b} matches \TypedString{this is a
+    \REMatch{word} boundary} but not \TypedString{expressive words are
+    preferable}. \NC\AR
+  \HL
+  \stoptable
+
+\subsection
+  {The one exception that breaks everything: back referencing.}
+
+We actually lied a bit when we said that all of the commonly found extensions
+maintained the regularity of the underlying regular expression.  There is one
+extension that greatly complicates matters~--~the back reference.
+
+\index{back reference}\Term{Back references} are a way to refer to what has
+already been matched by a subexpression of a regular expression.  Generally,
+any subexpression demarcated by \TypedRegex{(}\thinspace\dots\TypedRegex{)} is
+up for consideration.  We introduce the operator \TypedRegex{\}$n$, which will
+match whatever the $n$th subexpression, counting left parentheses
+(\TypedRegex{(}) from the left, matched.  An example of this is the regular
+expression \TypedRegex{([a-z]+) \1}, which|<|in a limited sense|>|matches
+repeated words in the input, such as any of the \TypedString{the the} pairs in
+\TypedString{... any of the the the ...}.
+
+This may seem like a great extension that has a lot of uses, such as the one
+exemplified in the previous paragraph.  Well, it turns out that adding this
+extensions does {\em not} maintain the regularity of the affected regular
+expression, and makes the problem of matching it against an input \NP||complete
+\cite[Aho90].  Without going into details on \NP||hardness and
+\NP||completeness, this means that the problem of matching a finite automaton
+created from a regular expression against some input string goes from a problem
+solvable in time proportional to the size of the automaton and the length of
+the string, to a problem which for many kinds of automata and inputs probably
+doesn’t have a solution that terminates in the course of the life expectancy of
+our galaxy (or our universe for that matter).
+
+Beyond the problem of back referencing ruining a lot of nice properties of
+regular expressions, it’s generally not as useful as initially thought.  The
+repeated word example given above is one of a very small set of useful cases
+where back referencing is useful.  However, as it is
+written|<|\TypedRegex{([a-z]+) \1}|>|it will miss a lot of cases that can
+appear.  What if the repeated words are not separated simply by a space?  This
+will have to be dealt with in some much more forgiving manner.  Also, a lot of
+tools, such as \Command{grep} won’t match across line||boundaries, which
+means that the “\type{the}\crlf\type{the}” in this manuscript won’t be matched
+correctly.
+
+Overall, the back||referencing extension is not as useful as it may first seem
+and should probably never have made it into the \POSIX\ standard.  Study of the
+properties of regular expressions with back referencing is lacking, most likely
+due to their \NP-completeness \cite[Aho90].
+
+Back referencing first appeared in \SNOBOL\ \cite[SNOBOL64], a programming
+language designed for processing text and designing text editors.  It later
+appeared in several \UNIX\ commands, such as \Command{ed}
+\cite[McIlroy86,POSIX92]\ and \Command{grep}.
+
+
+\section{A Concluding Example or Two}
+
+Using the extensions listed above, we may in a concise manner express the
+regular expression that denotes the automaton for matching floating point
+numbers discussed in \inexample[definitions:example:epsilon decimal number].
+The result can be seen in \inregex[regex:floating point number].
+
+\placeregex
+ []
+ [regex:floating point number]
+ {Floating point numbers}
+ {\midaligned{\TypedRegex{[+-]?[0-9]*([0-9]\.|\.[0-9])[0-9]*([eE][+-]?[0-9]+)?}}}
+
+A bit more general than our initial specification,
+\inregex[regex:posix floating point number] matches floating point number using
+\POSIX\ character classes for matching the digits constituting the number.
+This is certainly a regular expression you wouldn’t want to type in often.
+The \POSIX\ character classes make the intent of the character range clear, yet
+obfuscates the regular expression as a whole and it’s questionable if its
+advantages outweigh its disadvantages.  Just the fact that it was necessary to
+break it up into two lines in this manuscript is telling\dots
+
+\placeregex
+  []
+  [regex:posix floating point number]
+  {Floating point numbers using \POSIX\ character classes}
+  {\midaligned
+     {\TypedRegex{[+-]?[[:digit:]]*([[:digit:]]\.|\.[[:digit:]])[[:digit:]*}}
+   \crlf
+   \midaligned
+     {\TypedRegex{([eE][+-]?[[:digit:]]+)?}}}
+
+\stopcomponent

@@ -1,0 +1,129 @@
+\startcomponent thesis/chapters/implementation-text-editor
+
+\project masters-project
+\product thesis
+
+\chapter
+  [implementation - ned]
+  {An Introduction to the \NED\ Text Editor}
+
+
+In this chapter we’ll be introduced to the implementation of \NED, a new text
+editor designed to make excellent use of regular expressions|<|of the \NRE\
+variety|>|throughout it’s command||set.  This command||set has been greatly
+inspired by that of the \SAM\ text editor and is currently limited to be but a
+small superset of it.  In the future, useful commands found in other text
+editors, such as \Vim\ and \EMACS, will surely be incorporated into the
+command||set.  Nonetheless, the \SAM||based command||set provides the user with
+many useful|<|and powerful|>|commands, and the use of {\NRE}s makes it easy to
+use; a trait not inherited from its predecessors.
+
+We start off with discussing the implementation of the buffering strategy
+employed by \NED, the piece||table data structure introduced in
+\insection[text editors - internal:piece table buffering strategy].  As the
+table itself is represented using a red||black tree, we’ll henceforth refer to
+it as a \Term{piece||tree}.
+
+Once we’ve seen how piece||trees are implemented, we’ll continue with the
+implementation of \NED\ itself.  \NED\ is written in Ruby, so the code will
+look somewhat different.  But don’t fret, it’ll still be easy to follow, as it
+is thoroughly discussed and simple to understand.
+
+\startitemize
+  \item Discuss the implementation of \NED.
+
+  \item Introduce the implementation of the buffering strategy used, namely a
+    piece table using a red-black tree for the second||level data structure.
+
+  \item Discuss Ruby as an implementation language for the user interface and
+    how to connect Ruby and C.
+
+\stopitemize
+
+\component thesis/sources/piecetree/piece.h.tex
+
+\component thesis/sources/piecetree/piece.c.tex
+
+\component thesis/sources/piecetree/node.h.tex
+
+\component thesis/sources/piecetree/node.c.tex
+
+\component thesis/sources/piecetree/iterator.h.tex
+
+\component thesis/sources/piecetree/iterator.c.tex
+
+\component thesis/sources/piecetree/piecetree.h.tex
+
+\component thesis/sources/piecetree/piecetree.c.tex
+
+
+\section{Implementing \NED}
+
+The rest of this chapter is devoted to the implementation of \NED.  We’ll see
+how the piece||tree data structure introduced in the preceeding section can be
+used to represent a buffer and how to write a command||set that operates on
+these buffers.  We’ll also see how to write a command||line parser so that we
+may provide our user with a way to enter commands to be executed by the text
+editor.
+
+
+\component thesis/sources/ned/ned.rb.tex
+
+\component thesis/sources/ned/ned/registry.rb.tex
+
+\component thesis/sources/ned/ned/buffer.rb.tex
+
+\component thesis/sources/ned/ned/buffer/buffer.rb.tex
+
+\component thesis/sources/ned/ned/regexes.rb.tex
+
+\component thesis/sources/ned/ned/command-line.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/scanner.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/tokens.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/simple.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/tokens/command.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/tokens/commands.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/tokens/regex.rb.tex
+
+\component thesis/sources/ned/ned/command-line/parsers/tokens/text.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands.rb.tex
+
+\component thesis/sources/ned/ned/command-line/command.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/append.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/change.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/insert.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/delete.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/extract.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/inject.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/substitute.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/guard.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/invertedguard.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/print.rb.tex
+
+\component thesis/sources/ned/ned/command-line/commands/compound.rb.tex
+
+% TODO: Discuss possible extensions that can easily be made using this
+% strategy, such as syntax highlighting, undo|/|redo, and so on.
+
+% TODO: Show some examples of using \NED.
+
+\stopcomponent

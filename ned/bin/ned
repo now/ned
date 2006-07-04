@@ -1,0 +1,8 @@
+#! /usr/bin/ruby -w
+# contents: Command-line interface for ned.
+#
+# Copyright © 2005 Nikolai Weibull <nikolai@bitwi.se>
+
+require 'ned'
+
+Ned::Registry.command_line.parser.parse

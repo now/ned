@@ -1,0 +1,166 @@
+\startcomponent thesis/chapters/conclusion
+
+\project masters-project
+\product thesis
+
+\chapter
+  [future work]
+  {Future Work}
+
+
+\section{Future Work~--~Ideas That Deserve Further Study}
+
+
+\subsection{The Pattern||matching Library}
+
+Although the pattern||matching library works well and produces seemingly small
+and fast automata, experiments confirming this would add merit to its
+existance.  Data recorded in earlier tests of {\TNFA}s \cite[Laurikari01]\
+suggest that {\TNFA}s compare well with other finite automata.
+
+There remain ways to make things better, though.  The current implementation
+uses arrays of integers a lot.  The reasoning is that dealing with small arrays
+of integers is fast on modern systems; which is true.  There are, however, even
+speedier alternatives.  Parts of the code could be using bit||sets to simulate
+these arrays of integers.  Bit||set operations are generally several orders of
+magnitude faster than operations on arrays of integers, and are in many cases
+more space||efficient as well.  Bit||sets could be used in representing sets of
+tags during compilation.  Bit||sets could also be used to keep track of active
+states during execution, using methods based on those found in, e.g.,
+\cite[Navarro01,Baeza-YatesNavarro].
+
+Parameterized rules would perhaps add further expressitivity to the grammar,
+allowing rules such as \TypedRegex{<line-containing(r)>} to be defined:
+
+  \placeregex
+    {none}
+    \TypedRegex{<line-containing(r)> = ^.*<r>.*$}
+
+The current implementation also lacks a syntax and semantics for symbol ranges.
+Such a feature is dearly needed, but it has proven difficult to come up with a
+satisfying definition.  This is an area where \Unicode\ support makes things
+much more difficult, as one must commit to supporting so many more possible
+expressions|/|ranges, and decide on so many more decisions on how such ranges
+should be expressed.  All this has to be done while trying to keep things as
+familiar as possible.  Symbol ranges are perhaps the most familiar part of
+previous regular||expression syntaxes and changing them mercilessly may prove
+to be too dangerous, if one is to attract people’s attention.
+
+\Name{Ville}{Laurikari} has suggested a way to do approximate matching using
+tags \cite[Laurikari01], which is used in his pattern||matching library.  The
+method is straight||forward to implement, runs faster than previous algorithms,
+and provides great flexibility in specifying the allowed Levenshtein||distances
+\cite[Levenshtein66]\ (even on a per||transition basis).  The usefulness of
+adding approximate matching remains to be seen; perhaps the best way to assess
+its merit is simply to implement it and see\dots.
+
+It would also be interesting to compare different methods of simulating finite
+automata and to see how they perform.  There are many ways of doing so, and
+each seems to have its merits.
+
+\subsection{The Text Editor---\NED}
+
+\NED\ still needs {\em a lot} of work before it can be considered usable by a
+general public.  \NED\ desperately needs an interactive|/|visual user
+interface.  Right now it only accepts commands on a command||line.  Other
+features \NED\ is lacking include:
+
+\startitemize
+  \item Undo|/|Redo capabilities
+  \item Syntax highlighting
+  \item True \Unicode\ support
+\stopitemize
+
+The problem of undo|/|redo from a purely technical standpoint was briefly
+discussed in \inchapter[text editors - internal].  And although such
+functionality would be simple to implement, this may not be the desired
+solution.  All text editors today perform undo|/|redo by subtracting and adding
+to a sequential list of \Term{edit operations} representing the
+\Term{edit history} of the buffer.  This works for well in most cases, but
+doesn’t retain a complete history of the buffer, as it doesn’t keep track of
+undo|/|redo operations.  To do this, a tree structure would have to be employed
+instead, where new branches would be added for such operations.  This too is
+rather simple to implement.  The big issue how to allow the user to get access
+to this history.  How should the user be able to choose what branches to
+traverse?  This question demands more thought before being answered.
+
+Syntax highlighting is a method by which the text editor displays the contents
+of the buffer using different colors and typefaces to show its user the
+structure of the buffer.  Examples include highlighting comments in programming
+languages in a distinct color or typeface, thus making it easier for the user
+to separate comments from program code.  Syntax highlighting is a problem that
+demands much thought.  The user has to be able to tell the text editor what to
+highlight and in what manner to do so.  The text editor has to be able to keep
+up with changes in the buffer and update its display accordingly---a single
+character insertion may change the whole display!  Regular expressions are
+often employed for the specification end of it \cite[Lesk75,Paxson95], so we
+must make sure that our pattern||matching library is up for this task as well.
+
+\Unicode\ is partially supported in \NED.  The implementation still makes some
+assumptions about the input and doesn’t perform any translations from other
+character sets to \Unicode\ before placing them in a buffer.  The problem
+actually lies in Ruby’s implementation; Ruby currently doesn’t support
+\Unicode.  The good news is that support is expected to be added before the end
+of 2005.  Until then there are more pressing matters to attend to.
+
+The buffer backend, the piece||tree data structure, is in need of some stress
+tests to verify that it performs as well as we’ve hoped, considering its use of
+space and time.
+
+The command||line parser could also be made to accept user||defined tokens,
+beyond the ability of accepting user||defined commands.  Such an addition would
+warrant a rewrite of the whole command||line subsystem and should be well
+thought||out before it was done.
+
+The merit of using dependency injection in the implementation of \NED\ is also
+up for debate.  After an initial flurry of great expectations from the new
+pseudo||paradigm, interest has mostly died out, at least in its application on
+Ruby.  It seems nice in theory, but may complicate matters unnecessarily in
+practice.  It should, however, simplify unit testing.
+
+And speaking of unit testing, both the pattern||matching library and \NED\ are
+in need of unit tests.  Work has so far been done without giving much thought
+to testing.  In the future, tests will be performed alongside development,
+instead of being added at the end.
+
+%\subsection{This Manuscript}
+%
+%It’s time to discuss possible improvements to this manuscript, and yes, there
+%are some to be made.  The introduction to \Unicode\ in
+%\insection[definition:character sets]\ should be extended to include further
+%discussion of the transformations.  Some more diagrams to clarify how they work
+%would also make for easier understanding.
+%
+%The structure of this document could also be made clearer.  Right now it’s kind
+%of hard to tell exactly what has been done and why it was done.  A division into
+%parts, i.e., a leveling above chapters, could be of some help.
+
+\subsection{Miscellaneous}
+
+It’s time to introduce ideas that aren’t bound to anything that has been
+discussed in this manuscript already.
+
+The first idea, which is one that’s been on my mind ever since I was introduced
+to this formalism, is to try to harness the power of regular relations in a
+text editor.  \Name{Markus}{Forsberg} suggested, during an initial session for
+this master’s thesis, that I look into regular relations \cite[Kartunnen97].
+To him, it seemed that many of the textual transformations that I had in mind
+for my command||set for the text editor could be expressed using regular
+relations, thus alleviating the separation between commands and regular
+expressions in the command||set that I was proposing (and later used).  Time
+and focus stopped me from pursuing this solution, which is kind of sad, as I
+feel that I’ve lost a lot of time pondering the possibilities of such a
+solution instead of focusing on the solution that I was actually implementing.
+
+It’d be a great opportunity for me to be able to pursue the idea of using
+regular relations in an interactive process, such as a text editor, to perform
+textual transformations.  It’d also be a great opportunity for me to be able to
+slap Xerox on the fingers for locking up one of the few tools available for
+manipulating regular relations, \XFST \cite[Beesley03], behind ridiculous
+licensing schemes, as I’d have a good excuse for writing such a library|/|tool
+myself.  The challenge lies not so much in implementing the library itself,
+rather it lies in coming up with a good syntax for expressing the many possible
+operators that regular relations possess, see, e.g.,
+\cite[Kartunnen96,Kempe96,Kartunnen97].
+
+\stopcomponent

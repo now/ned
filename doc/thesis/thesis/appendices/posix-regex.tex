@@ -1,0 +1,325 @@
+\startcomponent thesis/appendices/regex-editors
+
+\project masters-project
+\product thesis
+
+\chapter
+  [posix regex]
+  {\POSIX\ Regular Expressions}
+
+
+\section
+  [posix regex.h]
+  {The \POSIX\ \CLang\ Regular Expression Interface}
+
+\Note This is the actual text of the section of the \POSIX\ \CLang\ interface
+that discusses regular expressions, with some slight typographical and editor
+changes to suit this manuscript.  Thus, this rendering should in no way be
+considered official, nor should it be reproduced as such.
+
+\subsection{Name}
+
+{\tt regcomp}, {\tt regerror}, {\tt regexec}, {\tt regfree}---regular expression matching
+
+\subsection{Synopsis}
+
+\startC
+#include <regex.h>
+
+int regcomp(regex_t *restrict preg,
+            const char *restrict pattern,
+            int cflags);
+size_t regerror(int errcode,
+                const regex_t *restrict preg,
+                char *restrict errbuf,
+                size_t errbuf_size);
+int regexec(const regex_t *restrict preg,
+            const char *restrict string,
+            size_t nmatch,
+            regmatch_t pmatch[restrict],
+            int eflags);
+void regfree(regex_t *preg);
+\stopC
+
+
+\subsection{Description}
+
+These functions interpret basic and extended regular expressions as described
+in the Base Definitions volume of \IEEE\ Std 1003.1-2001, Chapter 9, Regular
+Expressions.
+
+The {\tt regex_t} structure is defined in {\tt <regex.h>} and contains at least
+the following member:
+
+\placetable
+  []
+  []
+  {none}
+  \starttable[|l|l|p(17em)|]
+    \HL
+    \NC \bf Member Type \NC \bf Member Name \NC \bf Description \NC\AR
+    \HL
+    \NC \tt size_t      \NC \tt re_nsub     \NC Number of parenthesized \crlf subexpressions. \NC\AR
+    \HL
+  \stoptable
+
+The {\tt regmatch_t} structure is defined in {\tt <regex.h>} and contains at
+least the following members:
+
+\placetable
+  []
+  []
+  {none}
+  \starttable[|l|l|p(17em)|]
+    \HL
+    \NC \bf Member Type \NC \bf Member Name \NC \bf Description \NC\AR
+    \HL
+    \NC \tt regoff_t    \NC \tt rm_so\NC Byte offset from start of string to start of substring. \NC\AR
+    \NC \tt regoff_t    \NC \tt rm_eo\NC Byte offset from start of string to the first character after the end of substring. \NC\AR
+    \HL
+  \stoptable
+
+The ${\it regcomp}()$ function shall compile the regular expression contained
+in the string pointed to by the ${\it pattern}$ argument and place the results
+in the structure pointed to by ${\it preg}$. The ${\it cflags}$ argument is the
+bitwise-inclusive \cap{or} of zero or more of the following flags, which are
+defined in the {\tt <regex.h>} header:
+
+\term{{\tt REG_EXTENDED}}
+  Use Extended Regular Expressions.
+
+\term{{\tt REG_ICASE}}
+  Ignore case in match. (See the Base Definitions volume of \IEEE\ Std
+  1003.1-2001, Chapter 9, Regular Expressions.)
+
+\term{{\tt REG_NOSUB}}
+  Report only success|/|fail in ${\it regexec}()$.
+
+\term{{\tt REG_NEWLINE}}
+  Change the handling of \<newline>s, as described in the text.
+
+The default regular expression type for pattern is a Basic Regular Expression.
+The application can specify Extended Regular Expressions using the {\tt
+REG_EXTENDED} ${\it cflags}$ flag.
+
+If the {\tt REG_NOSUB} flag was not set in ${\it cflags}$, then
+${\it regcomp}()$ shall set ${\it re\_nsub}$ to the number of parenthesized
+subexpressions (delimited by “\TypedRegex{\(\)}” in basic regular expressions
+or “\TypedRegex{()}” in extended regular expressions) found in ${\it pattern}$.
+
+The ${\it regexec}()$ function compares the null-terminated string specified by
+${\it string}$ with the compiled regular expression ${\it preg}$ initialized by
+a previous call to ${\it regcomp}()$. If it finds a match, ${\it regexec}()$
+shall return 0; otherwise, it shall return non-zero indicating either no match
+or an error. The ${\it eflags}$ argument is the bitwise-inclusive \cap{or} of
+zero or more of the following flags, which are defined in the {\tt <regex.h>}
+header:
+
+\term{{\tt REG_NOTBOL}}
+  The first character of the string pointed to by string is not the beginning
+  of the line. Therefore, the circumflex character (‘\type{^}’), when taken
+  as a special character, shall not match the beginning of string.
+
+\term{{\tt REG_NOTEOL}}
+  The last character of the string pointed to by string is not the end of the
+  line. Therefore, the dollar sign (‘\type{$}’), when taken as a special
+  character, shall not match the end of string.
+
+If ${\it nmatch}$ is 0 or {\tt REG_NOSUB} was set in the ${\it cflags}$
+argument to ${\it regcomp}()$, then ${\it regexec}()$ shall ignore the
+${\it pmatch}$ argument.  Otherwise, the application shall ensure that the
+${\it pmatch}$ argument points to an array with at least ${\it nmatch}$
+elements, and ${\it regexec}()$ shall fill in the elements of that array with
+offsets of the substrings of string that correspond to the parenthesized
+subexpressions of ${\it pattern}$: ${\it pmatch}[i].{\it rm\_so}$ shall be the
+byte offset of the beginning and ${\it pmatch}[i].{\it rm\_eo}$ shall be one
+greater than the byte offset of the end of substring $i$. (Subexpression $i$
+begins at the $i$th matched open parenthesis, counting from 1.) Offsets in
+${\it pmatch}[0]$ identify the substring that corresponds to the entire regular
+expression.  Unused elements of ${\it pmatch}$ up to
+ ${\it pmatch}[{\it nmatch} - 1]$ shall be filled with $-1$. If there are more
+than ${\it nmatch}$ subexpressions in pattern (${\it pattern}$ itself counts as
+a subexpression), then ${\it regexec}()$ shall still do the match, but shall
+record only the first ${\it nmatch}$ substrings.
+
+When matching a basic or extended regular expression, any given parenthesized
+subexpression of ${\it pattern}$ might participate in the match of several
+different substrings of ${\it string}$, or it might not match any substring
+even though the pattern as a whole did match. The following rules shall be used
+to determine which substrings to report in ${\it pmatch}$ when matching regular
+expressions:
+
+\startitemize[n]
+  \item[one] If subexpression $i$ in a regular expression is not contained
+    within another subexpression, and it participated in the match several
+    times, then the byte offsets in ${\it pmatch}[i]$ shall delimit the
+    last such match.
+  
+  \item[two] If subexpression $i$ is not contained within another
+    subexpression, and it did not participate in an otherwise successful match,
+    the byte offsets in ${\it pmatch}[i]$ shall be $-1$. A subexpression does
+    not participate in the match when:
+
+    \startblockquote
+      ‘\TypedRegex{*}’ or “\TypedRegex/\{\}/” appears immediately after the
+      subexpression in a basic regular expression, or ‘\TypedRegex{*}’,
+      ‘\TypedRegex{?}’, or “\TypedRegex/{}/” appears immediately after the
+      subexpression in an extended regular expression, and the subexpression
+      did not match (matched 0 times).
+    \stopblockquote
+
+    \noindent or:
+
+    \startblockquote
+          ‘\TypedRegex{|}’ is used in an extended regular expression to select
+          this subexpression or another, and the other subexpression matched.
+    \stopblockquote
+
+  \item If subexpression $i$ is contained within another subexpression
+    $j$, and $i$ is not contained within any other subexpression that
+    is contained within $j$, and a match of subexpression $j$ is
+    reported in ${\it pmatch}[j]$, then the match or non-match of
+    subexpression $i$ reported in ${\it pmatch}[i]$ shall be as
+    described in \in[one] and \in[two]. above, but within the substring
+    reported in ${\it pmatch}[j]$ rather than the whole string. The offsets
+    in ${\it pmatch}[i]$ are still relative to the start of string.
+
+  \item If subexpression $i$ is contained within subexpression $j$, and the
+    byte offsets in ${\it pmatch}[j]$ are $-1$, then the pointers in
+    ${\it pmatch}[i]$ shall also be $-1$.
+
+  \item If subexpression $i$ matched a zero-length string, then both of the
+    byte offsets in ${\it pmatch}[i]$ shall be the byte offset of the character
+    or null terminator immediately following the zero-length string.
+\stopitemize
+
+If, when ${\it regexec}()$ is called, the locale is different from when the
+regular expression was compiled, the result is undefined.
+
+If {\tt REG_NEWLINE} is not set in ${\it cflags}$, then a \<newline> in 
+${\it pattern}$ or ${\it string}$ shall be treated as an ordinary character. If
+{\tt REG_NEWLINE} is set, then \<newline> shall be treated as an ordinary
+character except as follows:
+
+\startitemize[n]
+  \item A \<newline> in ${\it string}$ shall not be matched by a period outside
+    a bracket expression or by any form of a non-matching list (see the Base
+    Definitions volume of \IEEE\ Std 1003.1-2001, Chapter 9, Regular
+    Expressions).
+
+  \item A circumflex (‘\type{^}’) in ${\it pattern}$, when used to specify
+    expression anchoring (see the Base Definitions volume of \IEEE\ Std
+    1003.1-2001, Section 9.3.8, \BRE\ Expression Anchoring), shall match the
+    zero-length string immediately after a \<newline> in ${\it string}$,
+    regardless of the setting of {\tt REG_NOTBOL}.
+
+  \item A dollar sign (‘\type{$}’) in pattern, when used to specify
+    expression anchoring, shall match the zero-length string immediately before
+    a \<newline> in string, regardless of the setting of {\tt REG_NOTEOL}.
+\stopitemize
+
+The ${\it regfree}()$ function frees any memory allocated by ${\it regcomp}()$
+associated with ${\it preg}$.
+
+The following constants are defined as error return values:
+
+\term{{\tt REG_NOMATCH}}
+  ${\it regexec}()$ failed to match.
+
+\term{{\tt REG_BADPAT}}
+  Invalid regular expression.
+
+\term{{\tt REG_ECOLLATE}}
+  Invalid collating element referenced.
+
+\term{{\tt REG_ECTYPE}}
+  Invalid character class type referenced.
+
+\startterm{{\tt REG_EESCAPE}}
+  Trailing ‘\TypedRegex{\}’ in pattern.
+\stopterm
+
+\term{{\tt REG_ESUBREG}}
+  Number in “\<digit>” invalid or in error.
+
+\startterm{{\tt REG_EBRACK}}
+  “\type{[]}” imbalance.
+\stopterm
+
+\startterm{{\tt REG_EPAREN}}
+  “\TypedRegex{\(\)}” or “\TypedRegex{()}” imbalance.
+\stopterm
+
+\startterm{{\tt REG_EBRACE}}
+  “\TypedRegex/\{\}/” imbalance.
+\stopterm
+
+\startterm{{\tt REG_BADBR}}
+  Content of “\TypedRegex/\{\}/” invalid: not a number, number too large,
+  more than two numbers, first larger than second.
+\stopterm
+
+\term{{\tt REG_ERANGE}}
+  Invalid endpoint in range expression.
+
+\term{{\tt REG_ESPACE}}
+  Out of memory.
+
+\startterm{{\tt REG_BADRPT}}
+  ‘\TypedRegex{?}’, ‘\TypedRegex{*}’, or ‘\TypedRegex{+}’ not preceded by
+  valid regular expression.
+\stopterm
+
+The ${\it regerror}()$ function provides a mapping from error codes returned by
+the ${\it regcomp}()$ and ${\it regexec}()$ functions to unspecified printable
+strings. It generates a string corresponding to the value of the ${\it
+errcode}$ argument, which the application shall ensure is the last non-zero
+value returned by ${\it regcomp}()$ or ${\it regexec}()$ with the given value
+of ${\it preg}$. If ${\it errcode}$ is not such a value, the content of the
+generated string is unspecified.
+
+If ${\it preg}$ is a null pointer, but ${\it errcode}$ is a value returned by a
+previous call to ${\it regexec}()$ or ${\it regcomp}()$, the ${\it regerror}()$
+still generates an error string corresponding to the value of ${\it errcode}$,
+but it might not be as detailed under some implementations.
+
+If the ${\it errbuf\_size}$ argument is not 0, ${\it regerror}()$ shall place
+the generated string into the buffer of size ${\it errbuf\_size}$ bytes pointed
+to by ${\it errbuf}$. If the string (including the terminating null) cannot fit
+in the buffer, ${\it regerror}()$ shall truncate the string and null-terminate
+the result.
+
+If ${\it errbuf\_size}$ is 0, ${\it regerror}()$ shall ignore the errbuf
+argument, and return the size of the buffer needed to hold the generated
+string.
+
+If the ${\it preg}$ argument to ${\it regexec}()$ or ${\it regfree}()$ is not a
+compiled regular expression returned by ${\it regcomp}()$, the result is
+undefined. A ${\it preg}$ is no longer treated as a compiled regular expression
+after it is given to ${\it regfree}()$.
+
+\subsection{Return Value}
+
+Upon successful completion, the ${\it regcomp}()$ function shall return 0.
+Otherwise, it shall return an integer value indicating an error as described in
+{\tt <regex.h>}, and the content of ${\it preg}$ is undefined. If a code is
+returned, the interpretation shall be as given in {\tt <regex.h>}.
+
+If ${\it regcomp}()$ detects an invalid \RE, it may return {\tt REG_BADPAT}, or
+it may return one of the error codes that more precisely describes the error.
+
+Upon successful completion, the ${\it regexec}()$ function shall return 0.
+Otherwise, it shall return {\tt REG_NOMATCH} to indicate no match.
+
+Upon successful completion, the ${\it regerror}()$ function shall return the
+number of bytes needed to hold the entire generated string, including the null
+termination. If the return value is greater than ${\it errbuf\_size}$, the
+string returned in the buffer pointed to by ${\it errbuf}$ has been truncated.
+
+The ${\it regfree}()$ function shall not return a value.
+
+\subsection{Errors}
+
+No errors are defined.
+
+\stopcomponent

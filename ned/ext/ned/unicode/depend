@@ -1,0 +1,8 @@
+break.o: break.c unicode.h unicode-data/unicode-break.h
+decompose.o: decompose.c unicode.h private.h \
+  unicode-data/unicode-decompose.h unicode-data/unicode-compose.h
+properties.o: properties.c unicode.h private.h \
+  unicode-data/unicode-character-tables.h
+str.o: str.c str.h
+unicode.o: unicode.c unicode.h
+utf.o: utf.c unicode.h private.h str.h
